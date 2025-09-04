@@ -4,6 +4,7 @@ import { parseDailyReport } from './xlsx.parser';
 import { ToastrService } from 'ngx-toastr';
 import { ConfirmModalComponent } from './confirm-modal.component';
 import { ProjectType } from './types';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-upload',
@@ -71,6 +72,7 @@ import { ProjectType } from './types';
 export class UploadComponent {
   private store = inject(DataStoreService);
   private toastr = inject(ToastrService);
+  private router = inject(Router);
   protected file = signal<File | null>(null);
   protected date = signal<string>(new Date().toISOString().slice(0, 10));
   protected project = signal<ProjectType>('Autoline');
@@ -100,12 +102,23 @@ export class UploadComponent {
       const report = await parseDailyReport(f, this.date(), this.project());
       await this.store.upsertReport(report);
       this.file.set(null);
+      
+      // Обновляем данные в store
+      await this.store.loadAll();
+      
+      // Показываем сообщение об успехе
       this.toastr.success('Данные успешно импортированы!', 'Успех', {
         timeOut: 3000,
         progressBar: true,
         closeButton: true,
       });
-    } catch (error) {
+      
+      // Перезагружаем страницу для обновления данных
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+      
+   } catch (error) {
       this.toastr.error('Ошибка при импорте файла', 'Ошибка', {
         timeOut: 5000,
         progressBar: true,

@@ -33,7 +33,7 @@ export class DataStoreService {
     await this.loadAll();
   }
 
-  private async loadAll(): Promise<void> {
+  async loadAll(): Promise<void> {
     if (!this.db) return;
     const tx = this.db.transaction(DB_STORE, 'readonly');
     const store = tx.objectStore(DB_STORE);
