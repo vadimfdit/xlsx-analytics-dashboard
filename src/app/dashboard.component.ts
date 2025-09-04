@@ -184,6 +184,159 @@ import type { Campaign, ProjectType } from './types';
         </div>
       </div>
 
+      <!-- Секция сравнения периодов -->
+      <div class="p-6 rounded-lg bg-white shadow-lg border border-gray-100 mb-8">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-xl font-semibold text-gray-800">Сравнение периодов</h3>
+          <div class="flex items-center space-x-2">
+            <span class="text-sm text-gray-500">Сравнить с:</span>
+            <select class="text-sm border border-gray-300 rounded px-2 py-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500" (change)="onComparisonPeriod($event)">
+              <option value="previous_week">Предыдущая неделя</option>
+              <option value="previous_month" selected>Предыдущий месяц</option>
+              <option value="same_period_last_year">Тот же период прошлого года</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- Бюджет сравнение -->
+          <div class="p-4 bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm font-medium text-blue-600">Бюджет</span>
+              <span class="text-xs px-2 py-1 rounded-full" [class]="getComparisonClass(comparison().budget.change)">
+                {{ getComparisonIcon(comparison().budget.change) }} {{ comparison().budget.change > 0 ? '+' : '' }}{{ comparison().budget.change.toFixed(1) }}%
+              </span>
+            </div>
+            <div class="text-lg font-bold text-blue-800">€{{ comparison().budget.current.toLocaleString() }}</div>
+            <div class="text-xs text-blue-600 mt-1">
+              vs €{{ comparison().budget.previous.toLocaleString() }}
+            </div>
+          </div>
+
+          <!-- Конверсии сравнение -->
+          <div class="p-4 bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm font-medium text-green-600">Конверсии</span>
+              <span class="text-xs px-2 py-1 rounded-full" [class]="getComparisonClass(comparison().conversions.change)">
+                {{ getComparisonIcon(comparison().conversions.change) }} {{ comparison().conversions.change > 0 ? '+' : '' }}{{ comparison().conversions.change.toFixed(1) }}%
+              </span>
+            </div>
+            <div class="text-lg font-bold text-green-800">{{ comparison().conversions.current.toLocaleString() }}</div>
+            <div class="text-xs text-green-600 mt-1">
+              vs {{ comparison().conversions.previous.toLocaleString() }}
+            </div>
+          </div>
+
+          <!-- CTR сравнение -->
+          <div class="p-4 bg-gradient-to-br from-indigo-50 to-indigo-100 border border-indigo-200 rounded-lg">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm font-medium text-indigo-600">CTR</span>
+              <span class="text-xs px-2 py-1 rounded-full" [class]="getComparisonClass(comparison().ctr.change)">
+                {{ getComparisonIcon(comparison().ctr.change) }} {{ comparison().ctr.change > 0 ? '+' : '' }}{{ comparison().ctr.change.toFixed(1) }}%
+              </span>
+            </div>
+            <div class="text-lg font-bold text-indigo-800">{{ (comparison().ctr.current * 100).toFixed(2) }}%</div>
+            <div class="text-xs text-indigo-600 mt-1">
+              vs {{ (comparison().ctr.previous * 100).toFixed(2) }}%
+            </div>
+          </div>
+
+          <!-- CR сравнение -->
+          <div class="p-4 bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-lg">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm font-medium text-purple-600">CR</span>
+              <span class="text-xs px-2 py-1 rounded-full" [class]="getComparisonClass(comparison().cr.change)">
+                {{ getComparisonIcon(comparison().cr.change) }} {{ comparison().cr.change > 0 ? '+' : '' }}{{ comparison().cr.change.toFixed(1) }}%
+              </span>
+            </div>
+            <div class="text-lg font-bold text-purple-800">{{ (comparison().cr.current * 100).toFixed(2) }}%</div>
+            <div class="text-xs text-purple-600 mt-1">
+              vs {{ (comparison().cr.previous * 100).toFixed(2) }}%
+            </div>
+          </div>
+        </div>
+
+        <!-- Детальная таблица сравнения -->
+        <div class="mt-6">
+          <h4 class="text-md font-semibold text-gray-700 mb-3">Детальное сравнение</h4>
+          <div class="overflow-x-auto">
+            <table class="min-w-full bg-white border border-gray-200 rounded-lg">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Метрика</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Текущий период</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Предыдущий период</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Изменение</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Статус</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <tr>
+                  <td class="px-4 py-3 font-medium text-gray-900">Бюджет</td>
+                  <td class="px-4 py-3 text-gray-900">€{{ comparison().budget.current.toLocaleString() }}</td>
+                  <td class="px-4 py-3 text-gray-900">€{{ comparison().budget.previous.toLocaleString() }}</td>
+                  <td class="px-4 py-3 text-gray-900">
+                    <span [class]="comparison().budget.change > 0 ? 'text-green-600' : 'text-red-600'">
+                      {{ comparison().budget.change > 0 ? '+' : '' }}{{ comparison().budget.change.toFixed(1) }}%
+                    </span>
+                  </td>
+                  <td class="px-4 py-3">
+                    <span class="text-xs px-2 py-1 rounded-full" [class]="getComparisonClass(comparison().budget.change)">
+                      {{ getComparisonStatus(comparison().budget.change) }}
+                    </span>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="px-4 py-3 font-medium text-gray-900">Конверсии</td>
+                  <td class="px-4 py-3 text-gray-900">{{ comparison().conversions.current.toLocaleString() }}</td>
+                  <td class="px-4 py-3 text-gray-900">{{ comparison().conversions.previous.toLocaleString() }}</td>
+                  <td class="px-4 py-3 text-gray-900">
+                    <span [class]="comparison().conversions.change > 0 ? 'text-green-600' : 'text-red-600'">
+                      {{ comparison().conversions.change > 0 ? '+' : '' }}{{ comparison().conversions.change.toFixed(1) }}%
+                    </span>
+                  </td>
+                  <td class="px-4 py-3">
+                    <span class="text-xs px-2 py-1 rounded-full" [class]="getComparisonClass(comparison().conversions.change)">
+                      {{ getComparisonStatus(comparison().conversions.change) }}
+                    </span>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="px-4 py-3 font-medium text-gray-900">CTR</td>
+                  <td class="px-4 py-3 text-gray-900">{{ (comparison().ctr.current * 100).toFixed(2) }}%</td>
+                  <td class="px-4 py-3 text-gray-900">{{ (comparison().ctr.previous * 100).toFixed(2) }}%</td>
+                  <td class="px-4 py-3 text-gray-900">
+                    <span [class]="comparison().ctr.change > 0 ? 'text-green-600' : 'text-red-600'">
+                      {{ comparison().ctr.change > 0 ? '+' : '' }}{{ comparison().ctr.change.toFixed(1) }}%
+                    </span>
+                  </td>
+                  <td class="px-4 py-3">
+                    <span class="text-xs px-2 py-1 rounded-full" [class]="getComparisonClass(comparison().ctr.change)">
+                      {{ getComparisonStatus(comparison().ctr.change) }}
+                    </span>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="px-4 py-3 font-medium text-gray-900">CR</td>
+                  <td class="px-4 py-3 text-gray-900">{{ (comparison().cr.current * 100).toFixed(2) }}%</td>
+                  <td class="px-4 py-3 text-gray-900">{{ (comparison().cr.previous * 100).toFixed(2) }}%</td>
+                  <td class="px-4 py-3 text-gray-900">
+                    <span [class]="comparison().cr.change > 0 ? 'text-green-600' : 'text-red-600'">
+                      {{ comparison().cr.change > 0 ? '+' : '' }}{{ comparison().cr.change.toFixed(1) }}%
+                    </span>
+                  </td>
+                  <td class="px-4 py-3">
+                    <span class="text-xs px-2 py-1 rounded-full" [class]="getComparisonClass(comparison().cr.change)">
+                      {{ getComparisonStatus(comparison().cr.change) }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
       <div class="p-6 rounded-lg bg-white shadow-lg border border-gray-100">
         <div class="flex items-center justify-between mb-6">
           <div class="flex items-center space-x-4">
@@ -488,6 +641,7 @@ export class DashboardComponent {
   protected showDetailsModal = signal(false);
   protected selectedPointData = signal<any>(null);
   protected trendPeriod = signal<number>(30);
+  protected comparisonPeriod = signal<'previous_week' | 'previous_month' | 'same_period_last_year'>('previous_month');
 
   protected availableDates = computed(() => {
     return this.store.dates();
@@ -566,6 +720,105 @@ export class DashboardComponent {
       conversions: { trend: conversionsTrend, current: current.conversions, forecast: forecast.conversions },
       ctr: { trend: ctrTrend, current: current.ctr, forecast: forecast.ctr },
       cr: { trend: crTrend, current: current.cr, forecast: forecast.cr }
+    };
+  });
+
+  protected comparison = computed(() => {
+    const dates = this.filteredDates();
+    const period = this.comparisonPeriod();
+    
+    if (dates.length === 0) {
+      return {
+        budget: { current: 0, previous: 0, change: 0 },
+        conversions: { current: 0, previous: 0, change: 0 },
+        ctr: { current: 0, previous: 0, change: 0 },
+        cr: { current: 0, previous: 0, change: 0 }
+      };
+    }
+
+    const project = this.selectedProject();
+    
+    // Определяем периоды для сравнения
+    let currentPeriodDates: string[];
+    let previousPeriodDates: string[];
+    
+    if (period === 'previous_week') {
+      // Сравниваем с предыдущей неделей
+      const currentWeekStart = new Date(dates[0]);
+      const currentWeekEnd = new Date(dates[dates.length - 1]);
+      const previousWeekStart = new Date(currentWeekStart);
+      previousWeekStart.setDate(previousWeekStart.getDate() - 7);
+      const previousWeekEnd = new Date(currentWeekEnd);
+      previousWeekEnd.setDate(previousWeekEnd.getDate() - 7);
+      
+      currentPeriodDates = dates;
+      previousPeriodDates = this.store.dates().filter(date => {
+        const dateObj = new Date(date);
+        return dateObj >= previousWeekStart && dateObj <= previousWeekEnd;
+      });
+    } else if (period === 'previous_month') {
+      // Сравниваем с предыдущим месяцем
+      const currentMonthStart = new Date(dates[0]);
+      const currentMonthEnd = new Date(dates[dates.length - 1]);
+      const previousMonthStart = new Date(currentMonthStart);
+      previousMonthStart.setMonth(previousMonthStart.getMonth() - 1);
+      const previousMonthEnd = new Date(currentMonthEnd);
+      previousMonthEnd.setMonth(previousMonthEnd.getMonth() - 1);
+      
+      currentPeriodDates = dates;
+      previousPeriodDates = this.store.dates().filter(date => {
+        const dateObj = new Date(date);
+        return dateObj >= previousMonthStart && dateObj <= previousMonthEnd;
+      });
+    } else {
+      // Сравниваем с тем же периодом прошлого года
+      const currentYearStart = new Date(dates[0]);
+      const currentYearEnd = new Date(dates[dates.length - 1]);
+      const previousYearStart = new Date(currentYearStart);
+      previousYearStart.setFullYear(previousYearStart.getFullYear() - 1);
+      const previousYearEnd = new Date(currentYearEnd);
+      previousYearEnd.setFullYear(previousYearEnd.getFullYear() - 1);
+      
+      currentPeriodDates = dates;
+      previousPeriodDates = this.store.dates().filter(date => {
+        const dateObj = new Date(date);
+        return dateObj >= previousYearStart && dateObj <= previousYearEnd;
+      });
+    }
+
+    // Рассчитываем метрики для текущего периода
+    const currentMetrics = this.calculatePeriodMetrics(currentPeriodDates, project);
+    
+    // Рассчитываем метрики для предыдущего периода
+    const previousMetrics = this.calculatePeriodMetrics(previousPeriodDates, project);
+    
+    // Рассчитываем изменения
+    const calculateChange = (current: number, previous: number) => {
+      if (previous === 0) return current > 0 ? 100 : 0;
+      return ((current - previous) / previous) * 100;
+    };
+
+    return {
+      budget: {
+        current: currentMetrics.budget,
+        previous: previousMetrics.budget,
+        change: calculateChange(currentMetrics.budget, previousMetrics.budget)
+      },
+      conversions: {
+        current: currentMetrics.conversions,
+        previous: previousMetrics.conversions,
+        change: calculateChange(currentMetrics.conversions, previousMetrics.conversions)
+      },
+      ctr: {
+        current: currentMetrics.ctr,
+        previous: previousMetrics.ctr,
+        change: calculateChange(currentMetrics.ctr, previousMetrics.ctr)
+      },
+      cr: {
+        current: currentMetrics.cr,
+        previous: previousMetrics.cr,
+        change: calculateChange(currentMetrics.cr, previousMetrics.cr)
+      }
     };
   });
 
@@ -1118,6 +1371,55 @@ export class DashboardComponent {
   onTrendPeriod(e: Event) {
     const input = e.target as HTMLSelectElement;
     this.trendPeriod.set(parseInt(input.value));
+  }
+
+  onComparisonPeriod(e: Event) {
+    const input = e.target as HTMLSelectElement;
+    this.comparisonPeriod.set(input.value as 'previous_week' | 'previous_month' | 'same_period_last_year');
+  }
+
+  private calculatePeriodMetrics(dates: string[], project: ProjectType) {
+    const reports = this.store.reports().filter(r => 
+      dates.includes(r.date) && r.project === project
+    );
+    
+    const total = reports.reduce((sum, r) => ({
+      budget: sum.budget + r.total.budgetEur,
+      conversions: sum.conversions + r.total.conversions,
+      clicks: sum.clicks + r.total.clicks,
+      impressions: sum.impressions + r.total.impressions
+    }), { budget: 0, conversions: 0, clicks: 0, impressions: 0 });
+    
+    return {
+      budget: total.budget,
+      conversions: total.conversions,
+      ctr: total.impressions > 0 ? total.clicks / total.impressions : 0,
+      cr: total.clicks > 0 ? total.conversions / total.clicks : 0
+    };
+  }
+
+  getComparisonClass(change: number): string {
+    if (change > 10) return 'bg-green-100 text-green-800';
+    if (change > 0) return 'bg-blue-100 text-blue-800';
+    if (change < -10) return 'bg-red-100 text-red-800';
+    if (change < 0) return 'bg-orange-100 text-orange-800';
+    return 'bg-gray-100 text-gray-800';
+  }
+
+  getComparisonIcon(change: number): string {
+    if (change > 10) return '🚀';
+    if (change > 0) return '📈';
+    if (change < -10) return '💥';
+    if (change < 0) return '📉';
+    return '➡️';
+  }
+
+  getComparisonStatus(change: number): string {
+    if (change > 10) return 'Отлично';
+    if (change > 0) return 'Хорошо';
+    if (change < -10) return 'Критично';
+    if (change < 0) return 'Требует внимания';
+    return 'Стабильно';
   }
 
   getTrendClass(trend: number): string {
