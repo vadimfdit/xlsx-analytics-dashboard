@@ -533,6 +533,91 @@ import type { Campaign, ProjectType } from './types';
         }
       </div>
 
+      <!-- Секция автоматических рекомендаций -->
+      <div class="p-6 rounded-lg bg-white shadow-lg border border-gray-100 mb-8">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-xl font-semibold text-gray-800">💡 Автоматические рекомендации</h3>
+          <div class="flex items-center space-x-2">
+            <span class="text-sm text-gray-500">Приоритет:</span>
+            <select class="text-sm border border-gray-300 rounded px-2 py-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500" (change)="onRecommendationPriority($event)">
+              <option value="all">Все</option>
+              <option value="high" selected>Высокий</option>
+              <option value="medium">Средний</option>
+              <option value="low">Низкий</option>
+            </select>
+          </div>
+        </div>
+        
+        @if (recommendations().length > 0) {
+          <div class="space-y-4">
+            @for (recommendation of recommendations(); track recommendation.id) {
+              <div class="p-4 border rounded-lg" [class]="getRecommendationClass(recommendation.priority)">
+                <div class="flex items-start justify-between">
+                  <div class="flex-1">
+                    <div class="flex items-center mb-2">
+                      <span class="text-lg mr-2">{{ getRecommendationIcon(recommendation.priority) }}</span>
+                      <h4 class="font-semibold text-gray-800">{{ recommendation.title }}</h4>
+                      <span class="ml-2 text-xs px-2 py-1 rounded-full" [class]="getRecommendationPriorityClass(recommendation.priority)">
+                        {{ getRecommendationPriorityText(recommendation.priority) }}
+                      </span>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-3">{{ recommendation.description }}</p>
+                    
+                    @if (recommendation.impact) {
+                      <div class="text-xs text-gray-500 mb-2">
+                        <span class="font-medium">Ожидаемый эффект:</span> {{ recommendation.impact }}
+                      </div>
+                    }
+                    
+                    @if (recommendation.action) {
+                      <div class="text-xs text-gray-500">
+                        <span class="font-medium">Рекомендуемое действие:</span> {{ recommendation.action }}
+                      </div>
+                    }
+                  </div>
+                  <button class="ml-4 text-gray-400 hover:text-gray-600" (click)="dismissRecommendation(recommendation.id)">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="text-center py-8">
+            <div class="text-4xl mb-4">✅</div>
+            <h4 class="text-lg font-medium text-gray-800 mb-2">Рекомендаций нет</h4>
+            <p class="text-gray-600 text-sm">Все показатели находятся в оптимальном диапазоне</p>
+          </div>
+        }
+
+        <!-- Статистика рекомендаций -->
+        @if (recommendationStats().total > 0) {
+          <div class="mt-6 pt-4 border-t border-gray-200">
+            <h4 class="text-md font-semibold text-gray-700 mb-3">Статистика рекомендаций</h4>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div class="p-3 bg-gray-50 rounded-lg">
+                <div class="text-sm font-medium text-gray-600">Всего предложено</div>
+                <div class="text-lg font-bold text-gray-800">{{ recommendationStats().total }}</div>
+              </div>
+              <div class="p-3 bg-red-50 rounded-lg">
+                <div class="text-sm font-medium text-red-600">Высокий приоритет</div>
+                <div class="text-lg font-bold text-red-800">{{ recommendationStats().high }}</div>
+              </div>
+              <div class="p-3 bg-yellow-50 rounded-lg">
+                <div class="text-sm font-medium text-yellow-600">Средний приоритет</div>
+                <div class="text-lg font-bold text-yellow-800">{{ recommendationStats().medium }}</div>
+              </div>
+              <div class="p-3 bg-blue-50 rounded-lg">
+                <div class="text-sm font-medium text-blue-600">Низкий приоритет</div>
+                <div class="text-lg font-bold text-blue-800">{{ recommendationStats().low }}</div>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+
       <div class="p-6 rounded-lg bg-white shadow-lg border border-gray-100">
         <div class="flex items-center justify-between mb-6">
           <div class="flex items-center space-x-4">
@@ -908,6 +993,7 @@ export class DashboardComponent {
     cr: 0.02
   });
   protected anomalySensitivity = signal<'low' | 'medium' | 'high'>('medium');
+  protected recommendationPriority = signal<'all' | 'high' | 'medium' | 'low'>('high');
 
   protected availableDates = computed(() => {
     return this.store.dates();
@@ -1286,6 +1372,159 @@ export class DashboardComponent {
       critical,
       warning,
       info
+    };
+  });
+
+  protected recommendations = computed(() => {
+    const currentTotals = this.totals();
+    const trends = this.trends();
+    const comparison = this.comparison();
+    const kpiMetrics = this.kpiMetrics();
+    const priority = this.recommendationPriority();
+    
+    const recommendations: Array<{
+      id: string;
+      title: string;
+      description: string;
+      priority: 'high' | 'medium' | 'low';
+      impact?: string;
+      action?: string;
+    }> = [];
+    
+    // Анализируем бюджет
+    if (kpiMetrics.budget.achievement < 80) {
+      recommendations.push({
+        id: 'budget-low',
+        title: 'Низкий бюджет',
+        description: `Текущий бюджет составляет ${kpiMetrics.budget.achievement.toFixed(1)}% от цели`,
+        priority: kpiMetrics.budget.achievement < 50 ? 'high' : 'medium',
+        impact: 'Увеличение бюджета может повысить конверсии на 15-25%',
+        action: 'Рассмотрите увеличение бюджета на 20-30%'
+      });
+    }
+    
+    if (trends.budget.trend < -10) {
+      recommendations.push({
+        id: 'budget-declining',
+        title: 'Снижение бюджета',
+        description: `Бюджет снижается на ${Math.abs(trends.budget.trend).toFixed(1)}% в день`,
+        priority: 'high',
+        impact: 'Стабилизация бюджета может улучшить результаты',
+        action: 'Проверьте настройки бюджета и оптимизируйте расходы'
+      });
+    }
+    
+    // Анализируем конверсии
+    if (kpiMetrics.conversions.achievement < 70) {
+      recommendations.push({
+        id: 'conversions-low',
+        title: 'Низкие конверсии',
+        description: `Достигнуто только ${kpiMetrics.conversions.achievement.toFixed(1)}% от цели по конверсиям`,
+        priority: 'high',
+        impact: 'Улучшение конверсий может увеличить доход на 20-40%',
+        action: 'Оптимизируйте целевые страницы и улучшите релевантность'
+      });
+    }
+    
+    if (trends.conversions.trend < -5) {
+      recommendations.push({
+        id: 'conversions-declining',
+        title: 'Падение конверсий',
+        description: `Конверсии снижаются на ${Math.abs(trends.conversions.trend).toFixed(1)}% в день`,
+        priority: 'high',
+        impact: 'Остановка падения может сохранить текущие результаты',
+        action: 'Проверьте качество трафика и настройки рекламы'
+      });
+    }
+    
+    // Анализируем CTR
+    if (kpiMetrics.ctr.achievement < 60) {
+      recommendations.push({
+        id: 'ctr-low',
+        title: 'Низкий CTR',
+        description: `CTR составляет ${kpiMetrics.ctr.achievement.toFixed(1)}% от цели`,
+        priority: 'medium',
+        impact: 'Улучшение CTR может снизить стоимость клика на 10-15%',
+        action: 'Обновите креативы и улучшите таргетинг'
+      });
+    }
+    
+    if (trends.ctr.trend < -3) {
+      recommendations.push({
+        id: 'ctr-declining',
+        title: 'Снижение CTR',
+        description: `CTR снижается на ${Math.abs(trends.ctr.trend).toFixed(1)}% в день`,
+        priority: 'medium',
+        impact: 'Стабилизация CTR может улучшить эффективность',
+        action: 'Обновите объявления и проверьте релевантность'
+      });
+    }
+    
+    // Анализируем CR
+    if (kpiMetrics.cr.achievement < 50) {
+      recommendations.push({
+        id: 'cr-low',
+        title: 'Низкий CR',
+        description: `CR составляет ${kpiMetrics.cr.achievement.toFixed(1)}% от цели`,
+        priority: 'high',
+        impact: 'Улучшение CR может увеличить прибыль на 30-50%',
+        action: 'Оптимизируйте воронку продаж и улучшите UX'
+      });
+    }
+    
+    if (trends.cr.trend < -2) {
+      recommendations.push({
+        id: 'cr-declining',
+        title: 'Снижение CR',
+        description: `CR снижается на ${Math.abs(trends.cr.trend).toFixed(1)}% в день`,
+        priority: 'high',
+        impact: 'Остановка падения CR критически важно',
+        action: 'Проверьте качество лидов и процесс конверсии'
+      });
+    }
+    
+    // Сравнение с предыдущим периодом
+    if (comparison.budget.change < -20) {
+      recommendations.push({
+        id: 'budget-comparison',
+        title: 'Снижение бюджета по сравнению с прошлым периодом',
+        description: `Бюджет снизился на ${Math.abs(comparison.budget.change).toFixed(1)}%`,
+        priority: 'medium',
+        impact: 'Восстановление бюджета может улучшить результаты',
+        action: 'Рассмотрите увеличение бюджета до предыдущего уровня'
+      });
+    }
+    
+    if (comparison.conversions.change < -15) {
+      recommendations.push({
+        id: 'conversions-comparison',
+        title: 'Снижение конверсий по сравнению с прошлым периодом',
+        description: `Конверсии снизились на ${Math.abs(comparison.conversions.change).toFixed(1)}%`,
+        priority: 'high',
+        impact: 'Восстановление конверсий критически важно',
+        action: 'Проведите аудит рекламных кампаний и оптимизируйте воронку'
+      });
+    }
+    
+    // Фильтруем по приоритету
+    if (priority !== 'all') {
+      return recommendations.filter(r => r.priority === priority);
+    }
+    
+    return recommendations;
+  });
+
+  protected recommendationStats = computed(() => {
+    const recommendations = this.recommendations();
+    const high = recommendations.filter(r => r.priority === 'high').length;
+    const medium = recommendations.filter(r => r.priority === 'medium').length;
+    const low = recommendations.filter(r => r.priority === 'low').length;
+    
+    return {
+      total: recommendations.length,
+      high,
+      medium,
+      low
     };
   });
 
@@ -2038,6 +2277,58 @@ export class DashboardComponent {
 
   private getDismissedAnomalies(): string[] {
     const stored = localStorage.getItem('dismissed_anomalies');
+    return stored ? JSON.parse(stored) : [];
+  }
+
+  onRecommendationPriority(e: Event) {
+    const input = e.target as HTMLSelectElement;
+    this.recommendationPriority.set(input.value as 'all' | 'high' | 'medium' | 'low');
+  }
+
+  getRecommendationClass(priority: 'high' | 'medium' | 'low'): string {
+    switch (priority) {
+      case 'high': return 'border-red-200 bg-red-50';
+      case 'medium': return 'border-yellow-200 bg-yellow-50';
+      case 'low': return 'border-blue-200 bg-blue-50';
+      default: return 'border-gray-200 bg-gray-50';
+    }
+  }
+
+  getRecommendationIcon(priority: 'high' | 'medium' | 'low'): string {
+    switch (priority) {
+      case 'high': return '🚨';
+      case 'medium': return '⚠️';
+      case 'low': return '💡';
+      default: return '📊';
+    }
+  }
+
+  getRecommendationPriorityClass(priority: 'high' | 'medium' | 'low'): string {
+    switch (priority) {
+      case 'high': return 'bg-red-100 text-red-800';
+      case 'medium': return 'bg-yellow-100 text-yellow-800';
+      case 'low': return 'bg-blue-100 text-blue-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  }
+
+  getRecommendationPriorityText(priority: 'high' | 'medium' | 'low'): string {
+    switch (priority) {
+      case 'high': return 'Высокий';
+      case 'medium': return 'Средний';
+      case 'low': return 'Низкий';
+      default: return 'Неизвестно';
+    }
+  }
+
+  dismissRecommendation(recommendationId: string) {
+    const dismissedRecommendations = this.getDismissedRecommendations();
+    dismissedRecommendations.push(recommendationId);
+    localStorage.setItem('dismissed_recommendations', JSON.stringify(dismissedRecommendations));
+  }
+
+  private getDismissedRecommendations(): string[] {
+    const stored = localStorage.getItem('dismissed_recommendations');
     return stored ? JSON.parse(stored) : [];
   }
 
