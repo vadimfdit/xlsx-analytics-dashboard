@@ -103,6 +103,87 @@ import type { Campaign, ProjectType } from './types';
         </div>
       </div>
 
+      <!-- Секция трендов и прогнозов -->
+      <div class="p-6 rounded-lg bg-white shadow-lg border border-gray-100 mb-8">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-xl font-semibold text-gray-800">Тренды и прогнозы</h3>
+          <div class="flex items-center space-x-2">
+            <span class="text-sm text-gray-500">Период анализа:</span>
+            <select class="text-sm border border-gray-300 rounded px-2 py-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500" (change)="onTrendPeriod($event)">
+              <option value="7">7 дней</option>
+              <option value="14">14 дней</option>
+              <option value="30" selected>30 дней</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- Бюджет тренд -->
+          <div class="p-4 bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm font-medium text-blue-600">Бюджет</span>
+              <span class="text-xs px-2 py-1 rounded-full" [class]="getTrendClass(trends().budget.trend)">
+                {{ getTrendIcon(trends().budget.trend) }} {{ trends().budget.trend > 0 ? '+' : '' }}{{ trends().budget.trend.toFixed(1) }}%
+              </span>
+            </div>
+            <div class="text-lg font-bold text-blue-800">€{{ trends().budget.current.toLocaleString() }}</div>
+            <div class="text-xs text-blue-600 mt-1">
+              Прогноз: €{{ trends().budget.forecast.toLocaleString() }}
+            </div>
+          </div>
+
+          <!-- Конверсии тренд -->
+          <div class="p-4 bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm font-medium text-green-600">Конверсии</span>
+              <span class="text-xs px-2 py-1 rounded-full" [class]="getTrendClass(trends().conversions.trend)">
+                {{ getTrendIcon(trends().conversions.trend) }} {{ trends().conversions.trend > 0 ? '+' : '' }}{{ trends().conversions.trend.toFixed(1) }}%
+              </span>
+            </div>
+            <div class="text-lg font-bold text-green-800">{{ trends().conversions.current.toLocaleString() }}</div>
+            <div class="text-xs text-green-600 mt-1">
+              Прогноз: {{ trends().conversions.forecast.toLocaleString() }}
+            </div>
+          </div>
+
+          <!-- CTR тренд -->
+          <div class="p-4 bg-gradient-to-br from-indigo-50 to-indigo-100 border border-indigo-200 rounded-lg">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm font-medium text-indigo-600">CTR</span>
+              <span class="text-xs px-2 py-1 rounded-full" [class]="getTrendClass(trends().ctr.trend)">
+                {{ getTrendIcon(trends().ctr.trend) }} {{ trends().ctr.trend > 0 ? '+' : '' }}{{ trends().ctr.trend.toFixed(1) }}%
+              </span>
+            </div>
+            <div class="text-lg font-bold text-indigo-800">{{ (trends().ctr.current * 100).toFixed(2) }}%</div>
+            <div class="text-xs text-indigo-600 mt-1">
+              Прогноз: {{ (trends().ctr.forecast * 100).toFixed(2) }}%
+            </div>
+          </div>
+
+          <!-- CR тренд -->
+          <div class="p-4 bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-lg">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm font-medium text-purple-600">CR</span>
+              <span class="text-xs px-2 py-1 rounded-full" [class]="getTrendClass(trends().cr.trend)">
+                {{ getTrendIcon(trends().cr.trend) }} {{ trends().cr.trend > 0 ? '+' : '' }}{{ trends().cr.trend.toFixed(1) }}%
+              </span>
+            </div>
+            <div class="text-lg font-bold text-purple-800">{{ (trends().cr.current * 100).toFixed(2) }}%</div>
+            <div class="text-xs text-purple-600 mt-1">
+              Прогноз: {{ (trends().cr.forecast * 100).toFixed(2) }}%
+            </div>
+          </div>
+        </div>
+
+        <!-- График трендов -->
+        <div class="mt-6">
+          <h4 class="text-md font-semibold text-gray-700 mb-3">График трендов</h4>
+          <div class="h-64">
+            <canvas baseChart [type]="'line'" [data]="trendChartData()" [options]="trendChartOptions"></canvas>
+          </div>
+        </div>
+      </div>
+
       <div class="p-6 rounded-lg bg-white shadow-lg border border-gray-100">
         <div class="flex items-center justify-between mb-6">
           <div class="flex items-center space-x-4">
@@ -406,9 +487,86 @@ export class DashboardComponent {
   protected selectedDeleteDate = signal('');
   protected showDetailsModal = signal(false);
   protected selectedPointData = signal<any>(null);
+  protected trendPeriod = signal<number>(30);
 
   protected availableDates = computed(() => {
     return this.store.dates();
+  });
+
+  protected trends = computed(() => {
+    const dates = this.filteredDates();
+    const period = this.trendPeriod();
+    
+    if (dates.length < 2) {
+      return {
+        budget: { trend: 0, current: 0, forecast: 0 },
+        conversions: { trend: 0, current: 0, forecast: 0 },
+        ctr: { trend: 0, current: 0, forecast: 0 },
+        cr: { trend: 0, current: 0, forecast: 0 }
+      };
+    }
+
+    // Берем последние N дней для анализа
+    const recentDates = dates.slice(-Math.min(period, dates.length));
+    const project = this.selectedProject();
+    
+    // Получаем данные для каждого дня
+    const dailyData = recentDates.map(date => {
+      const reports = this.store.reports().filter(r => r.date === date && r.project === project);
+      const total = reports.reduce((sum, r) => ({
+        budget: sum.budget + r.total.budgetEur,
+        conversions: sum.conversions + r.total.conversions,
+        clicks: sum.clicks + r.total.clicks,
+        impressions: sum.impressions + r.total.impressions
+      }), { budget: 0, conversions: 0, clicks: 0, impressions: 0 });
+      
+      return {
+        date,
+        budget: total.budget,
+        conversions: total.conversions,
+        ctr: total.impressions > 0 ? total.clicks / total.impressions : 0,
+        cr: total.clicks > 0 ? total.conversions / total.clicks : 0
+      };
+    });
+
+    // Рассчитываем тренды
+    const calculateTrend = (values: number[]) => {
+      if (values.length < 2) return 0;
+      
+      const n = values.length;
+      const sumX = (n * (n - 1)) / 2;
+      const sumY = values.reduce((sum, val) => sum + val, 0);
+      const sumXY = values.reduce((sum, val, i) => sum + val * i, 0);
+      const sumX2 = values.reduce((sum, _, i) => sum + i * i, 0);
+      
+      const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+      const avg = sumY / n;
+      
+      return avg > 0 ? (slope / avg) * 100 : 0;
+    };
+
+    const budgetTrend = calculateTrend(dailyData.map(d => d.budget));
+    const conversionsTrend = calculateTrend(dailyData.map(d => d.conversions));
+    const ctrTrend = calculateTrend(dailyData.map(d => d.ctr));
+    const crTrend = calculateTrend(dailyData.map(d => d.cr));
+
+    // Текущие значения (последний день)
+    const current = dailyData[dailyData.length - 1];
+    
+    // Простой прогноз (линейная экстраполяция)
+    const forecast = {
+      budget: current.budget * (1 + budgetTrend / 100),
+      conversions: current.conversions * (1 + conversionsTrend / 100),
+      ctr: current.ctr * (1 + ctrTrend / 100),
+      cr: current.cr * (1 + crTrend / 100)
+    };
+
+    return {
+      budget: { trend: budgetTrend, current: current.budget, forecast: forecast.budget },
+      conversions: { trend: conversionsTrend, current: current.conversions, forecast: forecast.conversions },
+      ctr: { trend: ctrTrend, current: current.ctr, forecast: forecast.ctr },
+      cr: { trend: crTrend, current: current.cr, forecast: forecast.cr }
+    };
   });
 
     protected chartOptions: ChartConfiguration['options'] = {
@@ -957,7 +1115,146 @@ export class DashboardComponent {
     return field ? report.total[field] : 0;
   }
 
+  onTrendPeriod(e: Event) {
+    const input = e.target as HTMLSelectElement;
+    this.trendPeriod.set(parseInt(input.value));
+  }
 
+  getTrendClass(trend: number): string {
+    if (trend > 5) return 'bg-green-100 text-green-800';
+    if (trend > 0) return 'bg-blue-100 text-blue-800';
+    if (trend < -5) return 'bg-red-100 text-red-800';
+    if (trend < 0) return 'bg-orange-100 text-orange-800';
+    return 'bg-gray-100 text-gray-800';
+  }
+
+  getTrendIcon(trend: number): string {
+    if (trend > 5) return '📈';
+    if (trend > 0) return '↗️';
+    if (trend < -5) return '📉';
+    if (trend < 0) return '↘️';
+    return '➡️';
+  }
+
+  protected trendChartData = computed<ChartConfiguration<'line'>['data']>(() => {
+    const dates = this.filteredDates();
+    const period = this.trendPeriod();
+    const recentDates = dates.slice(-Math.min(period, dates.length));
+    const project = this.selectedProject();
+    
+    const dailyData = recentDates.map(date => {
+      const reports = this.store.reports().filter(r => r.date === date && r.project === project);
+      const total = reports.reduce((sum, r) => ({
+        budget: sum.budget + r.total.budgetEur,
+        conversions: sum.conversions + r.total.conversions,
+        ctr: sum.ctr + (r.total.impressions > 0 ? r.total.clicks / r.total.impressions : 0),
+        cr: sum.cr + (r.total.clicks > 0 ? r.total.conversions / r.total.clicks : 0)
+      }), { budget: 0, conversions: 0, ctr: 0, cr: 0 });
+      
+      return {
+        date,
+        budget: total.budget,
+        conversions: total.conversions,
+        ctr: total.ctr * 100, // Convert to percentage
+        cr: total.cr * 100 // Convert to percentage
+      };
+    });
+
+    return {
+      labels: dailyData.map(d => d.date),
+      datasets: [
+        {
+          label: 'Бюджет (€)',
+          data: dailyData.map(d => d.budget),
+          borderColor: 'rgb(59, 130, 246)',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          tension: 0.4
+        },
+        {
+          label: 'Конверсии',
+          data: dailyData.map(d => d.conversions),
+          borderColor: 'rgb(34, 197, 94)',
+          backgroundColor: 'rgba(34, 197, 94, 0.1)',
+          tension: 0.4
+        },
+        {
+          label: 'CTR (%)',
+          data: dailyData.map(d => d.ctr),
+          borderColor: 'rgb(99, 102, 241)',
+          backgroundColor: 'rgba(99, 102, 241, 0.1)',
+          tension: 0.4
+        },
+        {
+          label: 'CR (%)',
+          data: dailyData.map(d => d.cr),
+          borderColor: 'rgb(147, 51, 234)',
+          backgroundColor: 'rgba(147, 51, 234, 0.1)',
+          tension: 0.4
+        }
+      ]
+    };
+  });
+
+  protected trendChartOptions: ChartConfiguration['options'] = {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: {
+      intersect: false,
+      mode: 'index'
+    },
+    plugins: {
+      legend: {
+        display: true,
+        position: 'top',
+        labels: {
+          usePointStyle: true,
+          padding: 15,
+          font: {
+            size: 11,
+            weight: 'bold'
+          }
+        }
+      },
+      tooltip: {
+        enabled: true,
+        mode: 'index',
+        intersect: false
+      }
+    },
+    scales: {
+      x: {
+        ticks: {
+          autoSkip: true,
+          font: {
+            size: 10
+          }
+        },
+        grid: {
+          color: 'rgba(0, 0, 0, 0.05)'
+        }
+      },
+      y: {
+        beginAtZero: true,
+        grid: {
+          color: 'rgba(0, 0, 0, 0.05)'
+        },
+        ticks: {
+          font: {
+            size: 10
+          }
+        }
+      }
+    },
+    elements: {
+      line: {
+        tension: 0.4
+      },
+      point: {
+        radius: 3,
+        hoverRadius: 5
+      }
+    }
+  };
 
   constructor() {
     // дефолтный период — весь диапазон
