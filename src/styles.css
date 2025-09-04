@@ -1,0 +1,18 @@
+@import 'ngx-toastr/toastr';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Глобальні утиліти під тему */
+:root {
+  color-scheme: light dark;
+}
+
+html, body, app-root {
+  height: 100%;
+}
+
+body {
+  @apply bg-gray-50 text-gray-900 antialiased;
+}
