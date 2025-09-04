@@ -43,18 +43,12 @@ export class DataStoreService {
       map[r.id] = r;
     }
     this.reportsMap.set(map);
-    console.log('📥 Загружено отчетів:', items.length);
-    items.forEach(report => {
-      console.log('  -', report.id, 'проект:', report.project, 'кампаній:', report.campaigns.length);
-    });
   }
 
   async upsertReport(report: DailyReport): Promise<void> {
-    console.log('💾 Сохраняем отчет:', report.id, 'проект:', report.project, 'кампаній:', report.campaigns.length);
     const map = { ...this.reportsMap() };
     map[report.id] = report;
     this.reportsMap.set(map);
-    console.log('✅ Отчет сохранен успешно');
   }
 
   async deleteReport(dateId: string): Promise<void> {

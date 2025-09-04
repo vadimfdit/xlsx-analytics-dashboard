@@ -42,7 +42,7 @@ async function parseSheet(workbook: XLSX.WorkBook, sheetName: string, dateId: st
   const worksheet = workbook.Sheets[sheetName];
   const rows = XLSX.utils.sheet_to_json<Record<string, any>>(worksheet, { header: 'A' });
   
-  console.log('📋 Обработка вкладки:', sheetName, 'строк:', rows.length);
+
 
   // Находим все пустые строки
   const emptyRows = rows.map((row, i) => ({ index: i, name: row['A'] }))
@@ -163,12 +163,7 @@ async function parseSheet(workbook: XLSX.WorkBook, sheetName: string, dateId: st
   const missingCampaigns = expectedCampaigns.filter(name => !foundCampaigns.includes(name));
   const extraCampaigns = foundCampaigns.filter(name => !expectedCampaigns.includes(name));
 
-  console.log('📊 Результаты парсинга для вкладки', sheetName + ':');
-  console.log('Найдено кампаній:', campaigns.length);
-  console.log('Назви кампаній:', foundCampaigns);
-  console.log('Відсутні кампанії:', missingCampaigns);
-  console.log('Додаткові кампанії:', extraCampaigns);
-  console.log('Загальні метрики:', total);
+
 
   const report: DailyReport = {
     id: `${dateId}-${project}`,
@@ -192,24 +187,24 @@ export function parseAllSheets(file: File, dateId: string): Promise<DailyReport[
         const reports: DailyReport[] = [];
         const targetSheets = ['Autoline', 'Machinery', 'Agroline'];
         
-        console.log('🔄 Обработка всех вкладок:', targetSheets);
+
         
         for (const sheetName of targetSheets) {
           if (workbook.SheetNames.includes(sheetName)) {
-            console.log('📋 Обрабатываем вкладку:', sheetName);
+
             try {
               const report = await parseSheet(workbook, sheetName, dateId);
               reports.push(report);
-              console.log('✅ Вкладка', sheetName, 'обработана успешно');
+
             } catch (error) {
               console.error('❌ Ошибка при обработке вкладки', sheetName + ':', error);
             }
           } else {
-            console.log('⚠️ Вкладка', sheetName, 'не найдена');
+
           }
         }
         
-        console.log('📊 Всего обработано отчетов:', reports.length);
+
         resolve(reports);
       } catch (error) {
         reject(error);
@@ -235,19 +230,19 @@ export function parseDailyReport(file: File, dateId: string, sheetName?: string)
           // Используем переданную вкладку
           targetSheetName = sheetName;
           project = sheetName as ProjectType;
-          console.log('✅ Используем переданную вкладку:', targetSheetName);
+
         } else {
           // Автоматически определяем проект по названию вкладки
           targetSheetName = workbook.SheetNames[0]; // по умолчанию первая вкладка
           
-          console.log('Доступные вкладки:', workbook.SheetNames);
+
           
           for (const wsName of workbook.SheetNames) {
             const cleanSheetName = wsName.trim();
             if (cleanSheetName === 'Autoline' || cleanSheetName === 'Machinery' || cleanSheetName === 'Agroline') {
               project = cleanSheetName as ProjectType;
               targetSheetName = wsName;
-              console.log('✅ Автоматически найден проект:', project, 'вкладка:', targetSheetName);
+
               break;
             }
           }
