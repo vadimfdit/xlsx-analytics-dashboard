@@ -736,6 +736,66 @@ import type { Campaign, ProjectType } from './types';
         </div>
       </div>
     }
+
+    <!-- Модальное окно настройки KPI -->
+    @if (showKPISettings()) {
+      <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-800">Настройка KPI целей</h3>
+            <button class="text-gray-400 hover:text-gray-600" (click)="showKPISettings.set(false)">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+          
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Проект</label>
+              <select class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" (change)="onKPISettingsProject($event)">
+                <option value="Autoline">Autoline</option>
+                <option value="Machinery">Machinery</option>
+                <option value="Agroline">Agroline</option>
+              </select>
+            </div>
+            
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Бюджет (€)</label>
+              <input type="number" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                     [value]="kpiSettingsTargets().budget" (change)="onKPIBudgetChange($event)" />
+            </div>
+            
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Конверсии</label>
+              <input type="number" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                     [value]="kpiSettingsTargets().conversions" (change)="onKPIConversionsChange($event)" />
+            </div>
+            
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">CTR (%)</label>
+              <input type="number" step="0.01" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                     [value]="kpiSettingsTargets().ctr * 100" (change)="onKPICTRChange($event)" />
+            </div>
+            
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">CR (%)</label>
+              <input type="number" step="0.01" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                     [value]="kpiSettingsTargets().cr * 100" (change)="onKPICRChange($event)" />
+            </div>
+          </div>
+          
+          <div class="flex space-x-3 mt-6">
+            <button class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors" (click)="saveKPISettings()">
+              Сохранить
+            </button>
+            <button class="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors" (click)="showKPISettings.set(false)">
+              Отмена
+            </button>
+          </div>
+        </div>
+      </div>
+    }
   `,
   styles: [
     `:host{display:block}
@@ -760,6 +820,13 @@ export class DashboardComponent {
   protected trendPeriod = signal<number>(30);
   protected comparisonPeriod = signal<'previous_week' | 'previous_month' | 'same_period_last_year'>('previous_month');
   protected showKPISettings = signal<boolean>(false);
+  protected kpiSettingsProject = signal<ProjectType>('Autoline');
+  protected kpiSettingsTargets = signal({
+    budget: 10000,
+    conversions: 100,
+    ctr: 0.05,
+    cr: 0.02
+  });
 
   protected availableDates = computed(() => {
     return this.store.dates();
@@ -1647,6 +1714,59 @@ export class DashboardComponent {
       case 'critical': return 'Критично';
       default: return 'Неизвестно';
     }
+  }
+
+  onKPISettingsProject(e: Event) {
+    const input = e.target as HTMLSelectElement;
+    const project = input.value as ProjectType;
+    this.kpiSettingsProject.set(project);
+    
+    // Загружаем цели для выбранного проекта
+    const targets = this.getKPITargets(project);
+    this.kpiSettingsTargets.set(targets);
+  }
+
+  onKPIBudgetChange(e: Event) {
+    const input = e.target as HTMLInputElement;
+    const value = parseFloat(input.value) || 0;
+    const current = this.kpiSettingsTargets();
+    this.kpiSettingsTargets.set({ ...current, budget: value });
+  }
+
+  onKPIConversionsChange(e: Event) {
+    const input = e.target as HTMLInputElement;
+    const value = parseFloat(input.value) || 0;
+    const current = this.kpiSettingsTargets();
+    this.kpiSettingsTargets.set({ ...current, conversions: value });
+  }
+
+  onKPICTRChange(e: Event) {
+    const input = e.target as HTMLInputElement;
+    const value = (parseFloat(input.value) || 0) / 100; // Convert from % to decimal
+    const current = this.kpiSettingsTargets();
+    this.kpiSettingsTargets.set({ ...current, ctr: value });
+  }
+
+  onKPICRChange(e: Event) {
+    const input = e.target as HTMLInputElement;
+    const value = (parseFloat(input.value) || 0) / 100; // Convert from % to decimal
+    const current = this.kpiSettingsTargets();
+    this.kpiSettingsTargets.set({ ...current, cr: value });
+  }
+
+  saveKPISettings() {
+    const project = this.kpiSettingsProject();
+    const targets = this.kpiSettingsTargets();
+    
+    // Сохраняем в localStorage
+    const key = `kpi_targets_${project}`;
+    localStorage.setItem(key, JSON.stringify(targets));
+    
+    // Закрываем модальное окно
+    this.showKPISettings.set(false);
+    
+    // Показываем уведомление
+    alert(`Цели для проекта ${project} успешно сохранены!`);
   }
 
   getTrendClass(trend: number): string {
