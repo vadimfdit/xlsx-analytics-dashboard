@@ -47,15 +47,17 @@ export function parseDailyReport(file: File, dateId: string): Promise<DailyRepor
         
         // Автоматически определяем проект по названию вкладки
         let project: ProjectType = 'Autoline'; // по умолчанию
+        let targetSheetName = workbook.SheetNames[0]; // по умолчанию первая вкладка
+        
         for (const sheetName of workbook.SheetNames) {
           if (sheetName === 'Autoline' || sheetName === 'Machinery' || sheetName === 'Agroline') {
             project = sheetName as ProjectType;
+            targetSheetName = sheetName; // используем найденную вкладку
             break;
           }
         }
         
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
+        const worksheet = workbook.Sheets[targetSheetName];
         const rows = XLSX.utils.sheet_to_json<Record<string, any>>(worksheet, { header: 'A' });
 
         // Находим все пустые строки
