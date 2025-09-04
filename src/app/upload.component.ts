@@ -1,10 +1,11 @@
 import { Component, inject, signal } from '@angular/core';
 import { DataStoreService } from './data.store';
-import { parseDailyReport } from './xlsx.parser';
+import { parseDailyReport, parseAllSheets } from './xlsx.parser';
 import { ToastrService } from 'ngx-toastr';
 import { ConfirmModalComponent } from './confirm-modal.component';
 import { ProjectType } from './types';
 import { Router } from '@angular/router';
+import * as XLSX from 'xlsx';
 
 @Component({
   selector: 'app-upload',
@@ -85,8 +86,13 @@ export class UploadComponent {
     if (!f) return;
     
     try {
-      const report = await parseDailyReport(f, this.date());
-      await this.store.upsertReport(report);
+      const reports = await parseAllSheets(f, this.date());
+      
+      // Сохраняем все отчеты
+      for (const report of reports) {
+        await this.store.upsertReport(report);
+      }
+      
       this.file.set(null);
       
       // Обновляем данные в store
