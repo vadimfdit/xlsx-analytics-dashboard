@@ -1,8 +1,11 @@
 import { Component, inject, signal } from '@angular/core';
 import { DataStoreService } from './data.store';
-import { parseDailyReport } from './xlsx.parser';
+import { parseDailyReport, parseAllSheets } from './xlsx.parser';
 import { ToastrService } from 'ngx-toastr';
 import { ConfirmModalComponent } from './confirm-modal.component';
+import { ProjectType } from './types';
+import { Router } from '@angular/router';
+import * as XLSX from 'xlsx';
 
 @Component({
   selector: 'app-upload',
@@ -10,15 +13,15 @@ import { ConfirmModalComponent } from './confirm-modal.component';
   imports: [ConfirmModalComponent],
   template: `
     <div class="space-y-6">
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Дата отчета</label>
-          <input type="date" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" [value]="date()" (change)="onDate($event)" />
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">XLSX файл</label>
-          <input type="file" accept=".xlsx,.xls" (change)="onFile($event)" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
-        </div>
+              <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Дата отчета</label>
+            <input type="date" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" [value]="date()" (change)="onDate($event)" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">XLSX файл</label>
+            <input type="file" accept=".xlsx,.xls" (change)="onFile($event)" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+          </div>
         <div class="flex items-end">
           <button class="w-full px-6 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-md" [disabled]="!file()" (click)="import()">
             <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -62,6 +65,7 @@ import { ConfirmModalComponent } from './confirm-modal.component';
 export class UploadComponent {
   private store = inject(DataStoreService);
   private toastr = inject(ToastrService);
+  private router = inject(Router);
   protected file = signal<File | null>(null);
   protected date = signal<string>(new Date().toISOString().slice(0, 10));
   protected showConfirmModal = signal<boolean>(false);
@@ -82,15 +86,31 @@ export class UploadComponent {
     if (!f) return;
     
     try {
-      const report = await parseDailyReport(f, this.date());
-      await this.store.upsertReport(report);
+      const reports = await parseAllSheets(f, this.date());
+      
+      // Сохраняем все отчеты
+      for (const report of reports) {
+        await this.store.upsertReport(report);
+      }
+      
       this.file.set(null);
+      
+      // Обновляем данные в store
+      await this.store.loadAll();
+      
+      // Показываем сообщение об успехе
       this.toastr.success('Данные успешно импортированы!', 'Успех', {
         timeOut: 3000,
         progressBar: true,
         closeButton: true,
       });
-    } catch (error) {
+      
+      // Перезагружаем страницу для обновления данных
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+      
+   } catch (error) {
       this.toastr.error('Ошибка при импорте файла', 'Ошибка', {
         timeOut: 5000,
         progressBar: true,

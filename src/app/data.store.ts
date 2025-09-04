@@ -1,6 +1,6 @@
 import { Injectable, computed, effect, signal } from '@angular/core';
 import { openDB, type IDBPDatabase } from 'idb';
-import type { DailyReport, ReportIndex } from './types';
+import type { DailyReport, ReportIndex, ProjectType } from './types';
 
 const DB_NAME = 'analytics-db-v1';
 const DB_STORE = 'reports';
@@ -33,7 +33,7 @@ export class DataStoreService {
     await this.loadAll();
   }
 
-  private async loadAll(): Promise<void> {
+  async loadAll(): Promise<void> {
     if (!this.db) return;
     const tx = this.db.transaction(DB_STORE, 'readonly');
     const store = tx.objectStore(DB_STORE);
@@ -67,6 +67,13 @@ export class DataStoreService {
     const tx = this.db.transaction(DB_STORE, 'readwrite');
     await tx.store.clear();
     await tx.done;
+  }
+
+  async getReportsByProject(project: ProjectType): Promise<DailyReport[]> {
+    if (!this.db) return [];
+    const tx = this.db.transaction(DB_STORE, 'readonly');
+    const allReports = await tx.store.getAll();
+    return allReports.filter(report => report.project === project);
   }
 
   private async persistAll(reports: DailyReport[]): Promise<void> {

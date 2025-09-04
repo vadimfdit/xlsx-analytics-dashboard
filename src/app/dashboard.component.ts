@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration } from 'chart.js';
 import { DataStoreService } from './data.store';
-import type { Campaign } from './types';
+import type { Campaign, ProjectType } from './types';
 
 @Component({
   selector: 'app-dashboard',
@@ -14,7 +14,7 @@ import type { Campaign } from './types';
       <div class="space-y-6">
         <div class="p-6 rounded-lg bg-white shadow-lg border border-gray-100 mb-8">
           <h3 class="text-lg font-semibold text-gray-800 mb-4">Фильтры</h3>
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">От</label>
               <input type="date" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" [value]="from()" (change)="onFrom($event)" />
@@ -22,6 +22,14 @@ import type { Campaign } from './types';
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">До</label>
               <input type="date" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" [value]="to()" (change)="onTo($event)" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Проект</label>
+              <select class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" [value]="selectedProject()" (change)="onProject($event)">
+                <option value="Autoline">Autoline</option>
+                <option value="Machinery">Machinery</option>
+                <option value="Agroline">Agroline</option>
+              </select>
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">Кампания</label>
@@ -240,6 +248,7 @@ export class DashboardComponent {
   protected to = signal<string>('');
   protected selectedCampaign = signal<string>('');
   protected selectedSubgroup = signal<string>('');
+  protected selectedProject = signal<ProjectType>('Autoline');
   protected sortColumn = signal<string>('');
   protected sortDirection = signal<'asc' | 'desc'>('asc');
 
@@ -316,7 +325,10 @@ export class DashboardComponent {
 
   protected campaignNames = computed(() => {
     const names = new Set<string>();
+    const project = this.selectedProject();
+    
     for (const r of this.store.reports()) {
+      if (r.project !== project) continue;
       for (const c of r.campaigns) names.add(c.name);
     }
     return Array.from(names).sort();
@@ -338,7 +350,17 @@ export class DashboardComponent {
     const dates = this.store.dates();
     const from = this.from();
     const to = this.to();
-    return dates.filter(d => (!from || d >= from) && (!to || d <= to));
+    const project = this.selectedProject();
+    
+    let filteredDates = dates.filter(d => (!from || d >= from) && (!to || d <= to));
+    
+    // Всегда фильтруем по проекту
+    filteredDates = filteredDates.filter(d => {
+      const report = this.store.reports().find(r => r.id === d);
+      return report?.project === project;
+    });
+    
+    return filteredDates;
   });
 
   protected hasData = computed(() => {
@@ -545,6 +567,8 @@ export class DashboardComponent {
     }>();
     const camp = this.selectedCampaign();
     const subgroup = this.selectedSubgroup();
+    const project = this.selectedProject();
+    
     for (const d of this.filteredDates()) {
       const report = this.store.reports().find(x => x.id === d)!;
       if (!camp) {
@@ -656,9 +680,10 @@ export class DashboardComponent {
   });
 
   onFrom(e: Event) { this.from.set((e.target as HTMLInputElement).value); }
-  onTo(e: Event) { this.to.set((e.target as HTMLInputElement).value); }
+  onTo(e: Event) { this.to.set((e.target as HTMLSelectElement).value); }
   onCampaign(e: Event) { this.selectedCampaign.set((e.target as HTMLSelectElement).value); }
   onSubgroup(e: Event) { this.selectedSubgroup.set((e.target as HTMLSelectElement).value); }
+  onProject(e: Event) { this.selectedProject.set((e.target as HTMLSelectElement).value as ProjectType); }
 
   constructor() {
     // дефолтный период — весь диапазон

@@ -22,9 +22,12 @@ export interface Campaign extends CampaignRowMetrics {
   subgroups: Subgroup[];
 }
 
+export type ProjectType = 'Autoline' | 'Machinery' | 'Agroline';
+
 export interface DailyReport {
   id: string; // YYYY-MM-DD
   date: string; // YYYY-MM-DD
+  project: ProjectType;
   total: CampaignRowMetrics;
   campaigns: Campaign[];
 }
