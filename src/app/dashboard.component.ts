@@ -453,6 +453,86 @@ import type { Campaign, ProjectType } from './types';
         </div>
       </div>
 
+      <!-- Секция аномалий -->
+      <div class="p-6 rounded-lg bg-white shadow-lg border border-gray-100 mb-8">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-xl font-semibold text-gray-800">🔍 Аномалии и необычные изменения</h3>
+          <div class="flex items-center space-x-2">
+            <span class="text-sm text-gray-500">Чувствительность:</span>
+            <select class="text-sm border border-gray-300 rounded px-2 py-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500" (change)="onAnomalySensitivity($event)">
+              <option value="low">Низкая</option>
+              <option value="medium" selected>Средняя</option>
+              <option value="high">Высокая</option>
+            </select>
+          </div>
+        </div>
+        
+        @if (anomalies().length > 0) {
+          <div class="space-y-4">
+            @for (anomaly of anomalies(); track anomaly.id) {
+              <div class="p-4 border rounded-lg" [class]="getAnomalyClass(anomaly.severity)">
+                <div class="flex items-start justify-between">
+                  <div class="flex-1">
+                    <div class="flex items-center mb-2">
+                      <span class="text-lg mr-2">{{ getAnomalyIcon(anomaly.severity) }}</span>
+                      <h4 class="font-semibold text-gray-800">{{ anomaly.title }}</h4>
+                      <span class="ml-2 text-xs px-2 py-1 rounded-full" [class]="getAnomalySeverityClass(anomaly.severity)">
+                        {{ getAnomalySeverityText(anomaly.severity) }}
+                      </span>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-2">{{ anomaly.description }}</p>
+                    <div class="text-xs text-gray-500">
+                      <span class="font-medium">Дата:</span> {{ anomaly.date }} | 
+                      <span class="font-medium">Проект:</span> {{ anomaly.project }} |
+                      <span class="font-medium">Изменение:</span> 
+                      <span [class]="anomaly.change > 0 ? 'text-green-600' : 'text-red-600'">
+                        {{ anomaly.change > 0 ? '+' : '' }}{{ anomaly.change.toFixed(1) }}%
+                      </span>
+                    </div>
+                  </div>
+                  <button class="ml-4 text-gray-400 hover:text-gray-600" (click)="dismissAnomaly(anomaly.id)">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="text-center py-8">
+            <div class="text-4xl mb-4">✅</div>
+            <h4 class="text-lg font-medium text-gray-800 mb-2">Аномалий не обнаружено</h4>
+            <p class="text-gray-600 text-sm">Все показатели находятся в нормальном диапазоне</p>
+          </div>
+        }
+
+        <!-- Статистика аномалий -->
+        @if (anomalyStats().total > 0) {
+          <div class="mt-6 pt-4 border-t border-gray-200">
+            <h4 class="text-md font-semibold text-gray-700 mb-3">Статистика аномалий</h4>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div class="p-3 bg-gray-50 rounded-lg">
+                <div class="text-sm font-medium text-gray-600">Всего обнаружено</div>
+                <div class="text-lg font-bold text-gray-800">{{ anomalyStats().total }}</div>
+              </div>
+              <div class="p-3 bg-red-50 rounded-lg">
+                <div class="text-sm font-medium text-red-600">Критические</div>
+                <div class="text-lg font-bold text-red-800">{{ anomalyStats().critical }}</div>
+              </div>
+              <div class="p-3 bg-yellow-50 rounded-lg">
+                <div class="text-sm font-medium text-yellow-600">Предупреждения</div>
+                <div class="text-lg font-bold text-yellow-800">{{ anomalyStats().warning }}</div>
+              </div>
+              <div class="p-3 bg-blue-50 rounded-lg">
+                <div class="text-sm font-medium text-blue-600">Информационные</div>
+                <div class="text-lg font-bold text-blue-800">{{ anomalyStats().info }}</div>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+
       <div class="p-6 rounded-lg bg-white shadow-lg border border-gray-100">
         <div class="flex items-center justify-between mb-6">
           <div class="flex items-center space-x-4">
@@ -827,6 +907,7 @@ export class DashboardComponent {
     ctr: 0.05,
     cr: 0.02
   });
+  protected anomalySensitivity = signal<'low' | 'medium' | 'high'>('medium');
 
   protected availableDates = computed(() => {
     return this.store.dates();
@@ -1069,7 +1150,146 @@ export class DashboardComponent {
     };
   });
 
-    protected chartOptions: ChartConfiguration['options'] = {
+  protected anomalies = computed(() => {
+    const dates = this.filteredDates();
+    const project = this.selectedProject();
+    const sensitivity = this.anomalySensitivity();
+    
+    if (dates.length < 2) return [];
+    
+    const anomalies: Array<{
+      id: string;
+      title: string;
+      description: string;
+      date: string;
+      project: string;
+      metric: string;
+      change: number;
+      severity: 'critical' | 'warning' | 'info';
+    }> = [];
+    
+    // Получаем данные для анализа
+    const dailyData = dates.map(date => {
+      const reports = this.store.reports().filter(r => r.date === date && r.project === project);
+      const total = reports.reduce((sum, r) => ({
+        budget: sum.budget + r.total.budgetEur,
+        conversions: sum.conversions + r.total.conversions,
+        clicks: sum.clicks + r.total.clicks,
+        impressions: sum.impressions + r.total.impressions
+      }), { budget: 0, conversions: 0, clicks: 0, impressions: 0 });
+      
+      return {
+        date,
+        budget: total.budget,
+        conversions: total.conversions,
+        ctr: total.impressions > 0 ? total.clicks / total.impressions : 0,
+        cr: total.clicks > 0 ? total.conversions / total.clicks : 0
+      };
+    });
+    
+    // Настраиваем пороги в зависимости от чувствительности
+    const thresholds = {
+      low: { budget: 50, conversions: 100, ctr: 20, cr: 50 },
+      medium: { budget: 30, conversions: 50, ctr: 15, cr: 30 },
+      high: { budget: 15, conversions: 25, ctr: 10, cr: 15 }
+    };
+    
+    const currentThresholds = thresholds[sensitivity];
+    
+    // Анализируем каждую метрику
+    for (let i = 1; i < dailyData.length; i++) {
+      const current = dailyData[i];
+      const previous = dailyData[i - 1];
+      
+      // Бюджет
+      if (previous.budget > 0) {
+        const change = ((current.budget - previous.budget) / previous.budget) * 100;
+        if (Math.abs(change) > currentThresholds.budget) {
+          anomalies.push({
+            id: `budget-${current.date}`,
+            title: 'Резкое изменение бюджета',
+            description: `Бюджет изменился на ${Math.abs(change).toFixed(1)}% по сравнению с предыдущим днем`,
+            date: current.date,
+            project,
+            metric: 'budget',
+            change,
+            severity: Math.abs(change) > currentThresholds.budget * 2 ? 'critical' : 'warning'
+          });
+        }
+      }
+      
+      // Конверсии
+      if (previous.conversions > 0) {
+        const change = ((current.conversions - previous.conversions) / previous.conversions) * 100;
+        if (Math.abs(change) > currentThresholds.conversions) {
+          anomalies.push({
+            id: `conversions-${current.date}`,
+            title: 'Аномальное изменение конверсий',
+            description: `Количество конверсий изменилось на ${Math.abs(change).toFixed(1)}%`,
+            date: current.date,
+            project,
+            metric: 'conversions',
+            change,
+            severity: Math.abs(change) > currentThresholds.conversions * 2 ? 'critical' : 'warning'
+          });
+        }
+      }
+      
+      // CTR
+      if (previous.ctr > 0) {
+        const change = ((current.ctr - previous.ctr) / previous.ctr) * 100;
+        if (Math.abs(change) > currentThresholds.ctr) {
+          anomalies.push({
+            id: `ctr-${current.date}`,
+            title: 'Изменение CTR',
+            description: `CTR изменился на ${Math.abs(change).toFixed(1)}%`,
+            date: current.date,
+            project,
+            metric: 'ctr',
+            change,
+            severity: Math.abs(change) > currentThresholds.ctr * 2 ? 'critical' : 'warning'
+          });
+        }
+      }
+      
+      // CR
+      if (previous.cr > 0) {
+        const change = ((current.cr - previous.cr) / previous.cr) * 100;
+        if (Math.abs(change) > currentThresholds.cr) {
+          anomalies.push({
+            id: `cr-${current.date}`,
+            title: 'Изменение CR',
+            description: `CR изменился на ${Math.abs(change).toFixed(1)}%`,
+            date: current.date,
+            project,
+            metric: 'cr',
+            change,
+            severity: Math.abs(change) > currentThresholds.cr * 2 ? 'critical' : 'warning'
+          });
+        }
+      }
+    }
+    
+    // Фильтруем отклоненные аномалии
+    const dismissedAnomalies = this.getDismissedAnomalies();
+    return anomalies.filter(a => !dismissedAnomalies.includes(a.id));
+  });
+
+  protected anomalyStats = computed(() => {
+    const anomalies = this.anomalies();
+    const critical = anomalies.filter(a => a.severity === 'critical').length;
+    const warning = anomalies.filter(a => a.severity === 'warning').length;
+    const info = anomalies.filter(a => a.severity === 'info').length;
+    
+    return {
+      total: anomalies.length,
+      critical,
+      warning,
+      info
+    };
+  });
+
+  protected chartOptions: ChartConfiguration['options'] = {
     responsive: true,
     maintainAspectRatio: false,
     interaction: {
@@ -1767,6 +1987,58 @@ export class DashboardComponent {
     
     // Показываем уведомление
     alert(`Цели для проекта ${project} успешно сохранены!`);
+  }
+
+  onAnomalySensitivity(e: Event) {
+    const input = e.target as HTMLSelectElement;
+    this.anomalySensitivity.set(input.value as 'low' | 'medium' | 'high');
+  }
+
+  getAnomalyClass(severity: 'critical' | 'warning' | 'info'): string {
+    switch (severity) {
+      case 'critical': return 'border-red-200 bg-red-50';
+      case 'warning': return 'border-yellow-200 bg-yellow-50';
+      case 'info': return 'border-blue-200 bg-blue-50';
+      default: return 'border-gray-200 bg-gray-50';
+    }
+  }
+
+  getAnomalyIcon(severity: 'critical' | 'warning' | 'info'): string {
+    switch (severity) {
+      case 'critical': return '🚨';
+      case 'warning': return '⚠️';
+      case 'info': return 'ℹ️';
+      default: return '📊';
+    }
+  }
+
+  getAnomalySeverityClass(severity: 'critical' | 'warning' | 'info'): string {
+    switch (severity) {
+      case 'critical': return 'bg-red-100 text-red-800';
+      case 'warning': return 'bg-yellow-100 text-yellow-800';
+      case 'info': return 'bg-blue-100 text-blue-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  }
+
+  getAnomalySeverityText(severity: 'critical' | 'warning' | 'info'): string {
+    switch (severity) {
+      case 'critical': return 'Критично';
+      case 'warning': return 'Предупреждение';
+      case 'info': return 'Информация';
+      default: return 'Неизвестно';
+    }
+  }
+
+  dismissAnomaly(anomalyId: string) {
+    const dismissedAnomalies = this.getDismissedAnomalies();
+    dismissedAnomalies.push(anomalyId);
+    localStorage.setItem('dismissed_anomalies', JSON.stringify(dismissedAnomalies));
+  }
+
+  private getDismissedAnomalies(): string[] {
+    const stored = localStorage.getItem('dismissed_anomalies');
+    return stored ? JSON.parse(stored) : [];
   }
 
   getTrendClass(trend: number): string {
