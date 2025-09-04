@@ -12,23 +12,15 @@ import { Router } from '@angular/router';
   imports: [ConfirmModalComponent],
   template: `
     <div class="space-y-6">
-      <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Дата отчета</label>
-          <input type="date" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" [value]="date()" (change)="onDate($event)" />
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Проект</label>
-          <select class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" [value]="project()" (change)="onProject($event)">
-            <option value="Autoline">Autoline</option>
-            <option value="Machinery">Machinery</option>
-            <option value="Agroline">Agroline</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">XLSX файл</label>
-          <input type="file" accept=".xlsx,.xls" (change)="onFile($event)" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
-        </div>
+              <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Дата отчета</label>
+            <input type="date" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" [value]="date()" (change)="onDate($event)" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">XLSX файл</label>
+            <input type="file" accept=".xlsx,.xls" (change)="onFile($event)" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+          </div>
         <div class="flex items-end">
           <button class="w-full px-6 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-md" [disabled]="!file()" (click)="import()">
             <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -75,7 +67,6 @@ export class UploadComponent {
   private router = inject(Router);
   protected file = signal<File | null>(null);
   protected date = signal<string>(new Date().toISOString().slice(0, 10));
-  protected project = signal<ProjectType>('Autoline');
   protected showConfirmModal = signal<boolean>(false);
 
   onFile(e: Event) {
@@ -89,17 +80,12 @@ export class UploadComponent {
     this.date.set(input.value);
   }
 
-  onProject(e: Event) {
-    const select = e.target as HTMLSelectElement;
-    this.project.set(select.value as ProjectType);
-  }
-
   async import() {
     const f = this.file();
     if (!f) return;
     
     try {
-      const report = await parseDailyReport(f, this.date(), this.project());
+      const report = await parseDailyReport(f, this.date());
       await this.store.upsertReport(report);
       this.file.set(null);
       

@@ -37,13 +37,23 @@ function metricsFromRow(row: Record<string, any>): CampaignRowMetrics {
   };
 }
 
-export function parseDailyReport(file: File, dateId: string, project: ProjectType): Promise<DailyReport> {
+export function parseDailyReport(file: File, dateId: string): Promise<DailyReport> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
         const workbook = XLSX.read(data, { type: 'array' });
+        
+        // Автоматически определяем проект по названию вкладки
+        let project: ProjectType = 'Autoline'; // по умолчанию
+        for (const sheetName of workbook.SheetNames) {
+          if (sheetName === 'Autoline' || sheetName === 'Machinery' || sheetName === 'Agroline') {
+            project = sheetName as ProjectType;
+            break;
+          }
+        }
+        
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
         const rows = XLSX.utils.sheet_to_json<Record<string, any>>(worksheet, { header: 'A' });
