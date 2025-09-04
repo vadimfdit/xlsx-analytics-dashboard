@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable, from, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
+import { GoogleAdsConfig, INDUSTRY_CONFIGS, GOOGLE_ADS_QUERIES, transformGoogleAdsData } from './google-ads.config';
 
 export interface IndustryBenchmark {
   industry: string;
@@ -42,10 +43,7 @@ export class GoogleAdsService {
    * Отримує бенчмарки для конкретної галузі
    */
   getIndustryBenchmarks(industry: string): Observable<IndustryBenchmark> {
-    // В реальному додатку тут буде виклик Google Ads API
-    // Зараз повертаємо симульовані дані з API
-    
-    return this.simulateGoogleAdsAPI(industry).pipe(
+    return this.callRealGoogleAdsAPI(industry).pipe(
       map(data => this.transformAPIData(data, industry)),
       catchError(error => {
         console.error('Помилка отримання даних з Google Ads API:', error);
@@ -55,25 +53,126 @@ export class GoogleAdsService {
   }
 
   /**
-   * Симулює виклик Google Ads API
+   * Реальний виклик Google Ads API
    */
-  private simulateGoogleAdsAPI(industry: string): Observable<any> {
-    // Симулюємо затримку мережі
-    const delay = Math.random() * 2000 + 1000;
-    
+  private callRealGoogleAdsAPI(industry: string): Observable<any> {
     return new Observable(observer => {
-      setTimeout(() => {
-        // Симулюємо різні сценарії відповіді
-        const successRate = Math.random();
-        
-        if (successRate > 0.1) { // 90% успішних запитів
-          observer.next(this.generateMockAPIData(industry));
-          observer.complete();
-        } else {
-          observer.error(new Error('Помилка підключення до Google Ads API'));
-        }
-      }, delay);
+      this.executeGoogleAdsQuery(industry).then(data => {
+        observer.next(data);
+        observer.complete();
+      }).catch(error => {
+        observer.error(error);
+      });
     });
+  }
+
+  /**
+   * Виконує запит до Google Ads API
+   */
+  private async executeGoogleAdsQuery(industry: string): Promise<any> {
+    try {
+      const config = this.getGoogleAdsConfig();
+      const industryConfig = INDUSTRY_CONFIGS[industry as keyof typeof INDUSTRY_CONFIGS];
+      
+      if (!industryConfig) {
+        throw new Error(`Невідома галузь: ${industry}`);
+      }
+
+      // Отримуємо середні показники
+      const metricsQuery = GOOGLE_ADS_QUERIES.industryMetrics(industryConfig.industryId);
+      const metricsData = await this.makeGoogleAdsRequest(config, metricsQuery);
+      
+      // Отримуємо топ-виконавців
+      const topPerformersQuery = GOOGLE_ADS_QUERIES.topPerformers(industryConfig.industryId);
+      const topPerformersData = await this.makeGoogleAdsRequest(config, topPerformersQuery);
+      
+      // Отримуємо бюджетні дані
+      const budgetQuery = GOOGLE_ADS_QUERIES.budgetData(industryConfig.industryId);
+      const budgetData = await this.makeGoogleAdsRequest(config, budgetQuery);
+
+      return {
+        metrics: transformGoogleAdsData(metricsData, 'metrics'),
+        top_performers: transformGoogleAdsData(topPerformersData, 'top_performers'),
+        budget: transformGoogleAdsData(budgetData, 'budget')
+      };
+    } catch (error) {
+      console.error('Помилка виконання запиту до Google Ads API:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Виконує HTTP запит до Google Ads API
+   */
+  private async makeGoogleAdsRequest(config: GoogleAdsConfig, query: string): Promise<any[]> {
+    const accessToken = await this.getAccessToken(config);
+    
+    const response = await fetch(`https://googleads.googleapis.com/v14/customers/${config.customerId}/googleAds:searchStream`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        'developer-token': config.developerToken
+      },
+      body: JSON.stringify({
+        query: query
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Google Ads API помилка: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data.results || [];
+  }
+
+  /**
+   * Отримує access token для Google Ads API
+   */
+  private async getAccessToken(config: GoogleAdsConfig): Promise<string> {
+    if (config.accessToken) {
+      return config.accessToken;
+    }
+
+    if (!config.refreshToken) {
+      throw new Error('Необхідний refresh token для автентифікації');
+    }
+
+    const response = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: new URLSearchParams({
+        client_id: config.clientId,
+        client_secret: config.clientSecret,
+        refresh_token: config.refreshToken,
+        grant_type: 'refresh_token'
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error('Помилка оновлення access token');
+    }
+
+    const tokenData = await response.json();
+    return tokenData.access_token;
+  }
+
+  /**
+   * Отримує конфігурацію Google Ads API
+   */
+  private getGoogleAdsConfig(): GoogleAdsConfig {
+    // В реальному додатку ці дані повинні зберігатися в безпечному місці
+    // Наприклад, в environment змінних або в захищеному конфігураційному файлі
+    return {
+      clientId: 'YOUR_CLIENT_ID',
+      clientSecret: 'YOUR_CLIENT_SECRET',
+      developerToken: 'YOUR_DEVELOPER_TOKEN',
+      customerId: 'YOUR_CUSTOMER_ID',
+      refreshToken: 'YOUR_REFRESH_TOKEN'
+    };
   }
 
   /**
@@ -243,7 +342,7 @@ export class GoogleAdsService {
    * Отримує статус підключення до API
    */
   checkAPIStatus(): Observable<{ status: 'connected' | 'disconnected' | 'error'; message: string }> {
-    return this.simulateGoogleAdsAPI('general').pipe(
+    return this.callRealGoogleAdsAPI('general').pipe(
       map(() => ({ status: 'connected' as const, message: 'Google Ads API доступне' })),
       catchError(error => of({ 
         status: 'error' as const, 
