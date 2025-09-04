@@ -30,7 +30,8 @@
             ],
             "styles": [
               "src/styles.css"
-            ]
+            ],
+            "baseHref": "/xlsx-analytics-dashboard/"
           },
           "configurations": {
             "production": {
