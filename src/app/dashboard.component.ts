@@ -618,6 +618,183 @@ import type { Campaign, ProjectType } from './types';
         }
       </div>
 
+      <!-- Секция бенчмаркинга -->
+      <div class="p-6 rounded-lg bg-white shadow-lg border border-gray-100 mb-8">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-xl font-semibold text-gray-800">📊 Бенчмаркинг</h3>
+          <div class="flex items-center space-x-2">
+            <span class="text-sm text-gray-500">Отрасль:</span>
+            <select class="text-sm border border-gray-300 rounded px-2 py-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500" (change)="onBenchmarkIndustry($event)">
+              <option value="automotive" selected>Автомобильная</option>
+              <option value="machinery">Машиностроение</option>
+              <option value="agriculture">Сельское хозяйство</option>
+              <option value="general">Общие показатели</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <!-- Бюджет -->
+          <div class="p-4 border rounded-lg bg-gradient-to-br from-blue-50 to-blue-100">
+            <div class="flex items-center justify-between mb-3">
+              <h4 class="font-semibold text-gray-800">Бюджет</h4>
+              <span class="text-sm px-2 py-1 rounded-full" [class]="getBenchmarkClass(benchmarkData().budget.performance)">
+                {{ getBenchmarkStatus(benchmarkData().budget.performance) }}
+              </span>
+            </div>
+            <div class="space-y-2">
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-600">Ваш показатель:</span>
+                <span class="font-medium">{{ benchmarkData().budget.current | currency:'USD':'symbol':'1.0-0' }}</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-600">Средний по отрасли:</span>
+                <span class="font-medium">{{ benchmarkData().budget.average | currency:'USD':'symbol':'1.0-0' }}</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-600">Лучший результат:</span>
+                <span class="font-medium">{{ benchmarkData().budget.best | currency:'USD':'symbol':'1.0-0' }}</span>
+              </div>
+              <div class="mt-3 pt-2 border-t border-gray-200">
+                <div class="flex justify-between text-sm">
+                  <span class="text-gray-600">Позиция:</span>
+                  <span class="font-medium" [class]="getBenchmarkClass(benchmarkData().budget.performance)">
+                    {{ benchmarkData().budget.performance }}%
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Конверсии -->
+          <div class="p-4 border rounded-lg bg-gradient-to-br from-green-50 to-green-100">
+            <div class="flex items-center justify-between mb-3">
+              <h4 class="font-semibold text-gray-800">Конверсии</h4>
+              <span class="text-sm px-2 py-1 rounded-full" [class]="getBenchmarkClass(benchmarkData().conversions.performance)">
+                {{ getBenchmarkStatus(benchmarkData().conversions.performance) }}
+              </span>
+            </div>
+            <div class="space-y-2">
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-600">Ваш показатель:</span>
+                <span class="font-medium">{{ benchmarkData().conversions.current }}</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-600">Средний по отрасли:</span>
+                <span class="font-medium">{{ benchmarkData().conversions.average }}</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-600">Лучший результат:</span>
+                <span class="font-medium">{{ benchmarkData().conversions.best }}</span>
+              </div>
+              <div class="mt-3 pt-2 border-t border-gray-200">
+                <div class="flex justify-between text-sm">
+                  <span class="text-gray-600">Позиция:</span>
+                  <span class="font-medium" [class]="getBenchmarkClass(benchmarkData().conversions.performance)">
+                    {{ benchmarkData().conversions.performance }}%
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CTR -->
+          <div class="p-4 border rounded-lg bg-gradient-to-br from-purple-50 to-purple-100">
+            <div class="flex items-center justify-between mb-3">
+              <h4 class="font-semibold text-gray-800">CTR</h4>
+              <span class="text-sm px-2 py-1 rounded-full" [class]="getBenchmarkClass(benchmarkData().ctr.performance)">
+                {{ getBenchmarkStatus(benchmarkData().ctr.performance) }}
+              </span>
+            </div>
+            <div class="space-y-2">
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-600">Ваш показатель:</span>
+                <span class="font-medium">{{ benchmarkData().ctr.current | percent:'1.2-2' }}</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-600">Средний по отрасли:</span>
+                <span class="font-medium">{{ benchmarkData().ctr.average | percent:'1.2-2' }}</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-600">Лучший результат:</span>
+                <span class="font-medium">{{ benchmarkData().ctr.best | percent:'1.2-2' }}</span>
+              </div>
+              <div class="mt-3 pt-2 border-t border-gray-200">
+                <div class="flex justify-between text-sm">
+                  <span class="text-gray-600">Позиция:</span>
+                  <span class="font-medium" [class]="getBenchmarkClass(benchmarkData().ctr.performance)">
+                    {{ benchmarkData().ctr.performance }}%
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CR -->
+          <div class="p-4 border rounded-lg bg-gradient-to-br from-orange-50 to-orange-100">
+            <div class="flex items-center justify-between mb-3">
+              <h4 class="font-semibold text-gray-800">CR</h4>
+              <span class="text-sm px-2 py-1 rounded-full" [class]="getBenchmarkClass(benchmarkData().cr.performance)">
+                {{ getBenchmarkStatus(benchmarkData().cr.performance) }}
+              </span>
+            </div>
+            <div class="space-y-2">
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-600">Ваш показатель:</span>
+                <span class="font-medium">{{ benchmarkData().cr.current | percent:'1.2-2' }}</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-600">Средний по отрасли:</span>
+                <span class="font-medium">{{ benchmarkData().cr.average | percent:'1.2-2' }}</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-600">Лучший результат:</span>
+                <span class="font-medium">{{ benchmarkData().cr.best | percent:'1.2-2' }}</span>
+              </div>
+              <div class="mt-3 pt-2 border-t border-gray-200">
+                <div class="flex justify-between text-sm">
+                  <span class="text-gray-600">Позиция:</span>
+                  <span class="font-medium" [class]="getBenchmarkClass(benchmarkData().cr.performance)">
+                    {{ benchmarkData().cr.performance }}%
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- График бенчмаркинга -->
+        <div class="mt-8">
+          <h4 class="text-lg font-semibold text-gray-800 mb-4">Сравнение с отраслевыми стандартами</h4>
+          <div class="h-64">
+            <canvas baseChart [data]="benchmarkChartData()" [options]="benchmarkChartOptions" [type]="'radar'"></canvas>
+          </div>
+        </div>
+
+        <!-- Рекомендации по бенчмаркингу -->
+        <div class="mt-6 pt-4 border-t border-gray-200">
+          <h4 class="text-md font-semibold text-gray-700 mb-3">Рекомендации по улучшению позиции</h4>
+          <div class="space-y-3">
+            @for (insight of benchmarkInsights(); track insight.id) {
+              <div class="p-3 bg-gray-50 rounded-lg">
+                <div class="flex items-start">
+                  <span class="text-lg mr-3">{{ getBenchmarkInsightIcon(insight.type) }}</span>
+                  <div class="flex-1">
+                    <h5 class="font-medium text-gray-800 mb-1">{{ insight.title }}</h5>
+                    <p class="text-sm text-gray-600">{{ insight.description }}</p>
+                    @if (insight.potential) {
+                      <div class="text-xs text-gray-500 mt-2">
+                        <span class="font-medium">Потенциал улучшения:</span> {{ insight.potential }}
+                      </div>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
       <div class="p-6 rounded-lg bg-white shadow-lg border border-gray-100">
         <div class="flex items-center justify-between mb-6">
           <div class="flex items-center space-x-4">
@@ -994,6 +1171,7 @@ export class DashboardComponent {
   });
   protected anomalySensitivity = signal<'low' | 'medium' | 'high'>('medium');
   protected recommendationPriority = signal<'all' | 'high' | 'medium' | 'low'>('high');
+  protected benchmarkIndustry = signal<'automotive' | 'machinery' | 'agriculture' | 'general'>('automotive');
 
   protected availableDates = computed(() => {
     return this.store.dates();
@@ -1526,6 +1704,229 @@ export class DashboardComponent {
       medium,
       low
     };
+  });
+
+  protected benchmarkData = computed(() => {
+    const currentTotals = this.totals();
+    const industry = this.benchmarkIndustry();
+    
+    // Бенчмарки для разных отраслей
+    const benchmarks = {
+      automotive: {
+        budget: { average: 15000, best: 25000 },
+        conversions: { average: 85, best: 150 },
+        ctr: { average: 0.045, best: 0.08 },
+        cr: { average: 0.025, best: 0.045 }
+      },
+      machinery: {
+        budget: { average: 12000, best: 20000 },
+        conversions: { average: 65, best: 120 },
+        ctr: { average: 0.035, best: 0.065 },
+        cr: { average: 0.020, best: 0.035 }
+      },
+      agriculture: {
+        budget: { average: 8000, best: 15000 },
+        conversions: { average: 45, best: 90 },
+        ctr: { average: 0.030, best: 0.055 },
+        cr: { average: 0.018, best: 0.030 }
+      },
+      general: {
+        budget: { average: 10000, best: 18000 },
+        conversions: { average: 60, best: 110 },
+        ctr: { average: 0.040, best: 0.070 },
+        cr: { average: 0.022, best: 0.040 }
+      }
+    };
+    
+    const industryBenchmarks = benchmarks[industry];
+    
+    // Рассчитываем производительность (процент от лучшего результата)
+    const calculatePerformance = (current: number, best: number) => {
+      return Math.min(100, Math.max(0, (current / best) * 100));
+    };
+    
+    return {
+      budget: {
+        current: currentTotals.budget,
+        average: industryBenchmarks.budget.average,
+        best: industryBenchmarks.budget.best,
+        performance: calculatePerformance(currentTotals.budget, industryBenchmarks.budget.best)
+      },
+      conversions: {
+        current: currentTotals.conversions,
+        average: industryBenchmarks.conversions.average,
+        best: industryBenchmarks.conversions.best,
+        performance: calculatePerformance(currentTotals.conversions, industryBenchmarks.conversions.best)
+      },
+      ctr: {
+        current: currentTotals.ctrAvg,
+        average: industryBenchmarks.ctr.average,
+        best: industryBenchmarks.ctr.best,
+        performance: calculatePerformance(currentTotals.ctrAvg, industryBenchmarks.ctr.best)
+      },
+      cr: {
+        current: currentTotals.crAvg,
+        average: industryBenchmarks.cr.average,
+        best: industryBenchmarks.cr.best,
+        performance: calculatePerformance(currentTotals.crAvg, industryBenchmarks.cr.best)
+      }
+    };
+  });
+
+  protected benchmarkChartData = computed<ChartConfiguration<'radar'>['data']>(() => {
+    const data = this.benchmarkData();
+    
+    return {
+      labels: ['Бюджет', 'Конверсии', 'CTR', 'CR'],
+      datasets: [
+        {
+          label: 'Ваши показатели',
+          data: [
+            data.budget.performance,
+            data.conversions.performance,
+            data.ctr.performance,
+            data.cr.performance
+          ],
+          backgroundColor: 'rgba(59, 130, 246, 0.2)',
+          borderColor: 'rgba(59, 130, 246, 1)',
+          borderWidth: 2,
+          pointBackgroundColor: 'rgba(59, 130, 246, 1)',
+          pointBorderColor: '#fff',
+          pointHoverBackgroundColor: '#fff',
+          pointHoverBorderColor: 'rgba(59, 130, 246, 1)'
+        },
+        {
+          label: 'Средние по отрасли',
+          data: [
+            (data.budget.average / data.budget.best) * 100,
+            (data.conversions.average / data.conversions.best) * 100,
+            (data.ctr.average / data.ctr.best) * 100,
+            (data.cr.average / data.cr.best) * 100
+          ],
+          backgroundColor: 'rgba(34, 197, 94, 0.2)',
+          borderColor: 'rgba(34, 197, 94, 1)',
+          borderWidth: 2,
+          pointBackgroundColor: 'rgba(34, 197, 94, 1)',
+          pointBorderColor: '#fff',
+          pointHoverBackgroundColor: '#fff',
+          pointHoverBorderColor: 'rgba(34, 197, 94, 1)'
+        }
+      ]
+    };
+  });
+
+  protected benchmarkChartOptions: ChartConfiguration<'radar'>['options'] = {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      r: {
+        beginAtZero: true,
+        max: 100,
+        ticks: {
+          stepSize: 20
+        }
+      }
+    },
+    plugins: {
+      legend: {
+        position: 'top'
+      },
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            return context.dataset.label + ': ' + context.parsed.r.toFixed(1) + '%';
+          }
+        }
+      }
+    }
+  };
+
+  protected benchmarkInsights = computed(() => {
+    const data = this.benchmarkData();
+    const insights: Array<{
+      id: string;
+      title: string;
+      description: string;
+      type: 'improvement' | 'excellent' | 'warning';
+      potential?: string;
+    }> = [];
+    
+    // Анализируем каждый показатель
+    if (data.budget.performance < 60) {
+      insights.push({
+        id: 'budget-low',
+        title: 'Низкий бюджет по сравнению с отраслью',
+        description: `Ваш бюджет составляет ${data.budget.performance.toFixed(1)}% от лучшего результата в отрасли`,
+        type: 'improvement',
+        potential: 'Увеличение бюджета на 40-60% может значительно улучшить результаты'
+      });
+    } else if (data.budget.performance > 90) {
+      insights.push({
+        id: 'budget-excellent',
+        title: 'Отличный бюджет',
+        description: 'Ваш бюджет превышает 90% лучшего результата в отрасли',
+        type: 'excellent'
+      });
+    }
+    
+    if (data.conversions.performance < 50) {
+      insights.push({
+        id: 'conversions-low',
+        title: 'Низкие конверсии',
+        description: `Ваши конверсии составляют ${data.conversions.performance.toFixed(1)}% от лучшего результата`,
+        type: 'improvement',
+        potential: 'Оптимизация воронки может увеличить конверсии на 30-50%'
+      });
+    } else if (data.conversions.performance > 85) {
+      insights.push({
+        id: 'conversions-excellent',
+        title: 'Высокие конверсии',
+        description: 'Ваши конверсии находятся в топ-15% отрасли',
+        type: 'excellent'
+      });
+    }
+    
+    if (data.ctr.performance < 40) {
+      insights.push({
+        id: 'ctr-low',
+        title: 'Низкий CTR',
+        description: `Ваш CTR составляет ${data.ctr.performance.toFixed(1)}% от лучшего результата`,
+        type: 'improvement',
+        potential: 'Обновление креативов может улучшить CTR на 20-40%'
+      });
+    }
+    
+    if (data.cr.performance < 35) {
+      insights.push({
+        id: 'cr-low',
+        title: 'Низкий CR',
+        description: `Ваш CR составляет ${data.cr.performance.toFixed(1)}% от лучшего результата`,
+        type: 'improvement',
+        potential: 'Оптимизация процесса конверсии может улучшить CR на 25-45%'
+      });
+    }
+    
+    // Общие рекомендации
+    const averagePerformance = (data.budget.performance + data.conversions.performance + data.ctr.performance + data.cr.performance) / 4;
+    
+    if (averagePerformance < 50) {
+      insights.push({
+        id: 'overall-improvement',
+        title: 'Общий потенциал улучшения',
+        description: `Средняя производительность составляет ${averagePerformance.toFixed(1)}%`,
+        type: 'warning',
+        potential: 'Комплексная оптимизация может улучшить общие показатели на 40-60%'
+      });
+    } else if (averagePerformance > 80) {
+      insights.push({
+        id: 'overall-excellent',
+        title: 'Отличные результаты',
+        description: 'Ваши показатели находятся в топ-20% отрасли',
+        type: 'excellent'
+      });
+    }
+    
+    return insights;
   });
 
   protected chartOptions: ChartConfiguration['options'] = {
@@ -2330,6 +2731,35 @@ export class DashboardComponent {
   private getDismissedRecommendations(): string[] {
     const stored = localStorage.getItem('dismissed_recommendations');
     return stored ? JSON.parse(stored) : [];
+  }
+
+  onBenchmarkIndustry(e: Event) {
+    const input = e.target as HTMLSelectElement;
+    this.benchmarkIndustry.set(input.value as 'automotive' | 'machinery' | 'agriculture' | 'general');
+  }
+
+  getBenchmarkClass(performance: number): string {
+    if (performance >= 80) return 'bg-green-100 text-green-800';
+    if (performance >= 60) return 'bg-yellow-100 text-yellow-800';
+    if (performance >= 40) return 'bg-orange-100 text-orange-800';
+    return 'bg-red-100 text-red-800';
+  }
+
+  getBenchmarkStatus(performance: number): string {
+    if (performance >= 90) return 'Отлично';
+    if (performance >= 80) return 'Хорошо';
+    if (performance >= 60) return 'Средне';
+    if (performance >= 40) return 'Плохо';
+    return 'Критично';
+  }
+
+  getBenchmarkInsightIcon(type: 'improvement' | 'excellent' | 'warning'): string {
+    switch (type) {
+      case 'improvement': return '📈';
+      case 'excellent': return '🏆';
+      case 'warning': return '⚠️';
+      default: return '📊';
+    }
   }
 
   getTrendClass(trend: number): string {
