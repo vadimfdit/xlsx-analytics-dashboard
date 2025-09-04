@@ -13,7 +13,15 @@ import type { Campaign, ProjectType } from './types';
     @if (hasData()) {
       <div class="space-y-6">
         <div class="p-6 rounded-lg bg-white shadow-lg border border-gray-100 mb-8">
-          <h3 class="text-lg font-semibold text-gray-800 mb-4">Фильтры</h3>
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-800">Фильтры</h3>
+            <button class="px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:from-red-700 hover:to-red-800 transition-all duration-200 shadow-md flex items-center" (click)="showDeleteModal.set(true)">
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+              </svg>
+              Управление данными
+            </button>
+          </div>
           <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">От</label>
@@ -235,6 +243,43 @@ import type { Campaign, ProjectType } from './types';
         </div>
       </div>
     }
+
+    <!-- Модальное окно управления данными -->
+    @if (showDeleteModal()) {
+      <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+          <h3 class="text-lg font-semibold text-gray-800 mb-4">Управление данными</h3>
+          
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Выберите дату для удаления</label>
+              <select class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" (change)="onDeleteDateSelect($event)">
+                <option value="">Выберите дату</option>
+                @for (date of availableDates(); track date) {
+                  <option [value]="date">{{ date }}</option>
+                }
+              </select>
+            </div>
+            
+            <div class="flex space-x-3">
+              <button 
+                class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                [disabled]="!selectedDeleteDate()"
+                (click)="deleteSelectedDate()"
+              >
+                Удалить
+              </button>
+              <button 
+                class="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
+                (click)="showDeleteModal.set(false)"
+              >
+                Отмена
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
   `,
   styles: [
     `:host{display:block}
@@ -251,6 +296,12 @@ export class DashboardComponent {
   protected selectedProject = signal<ProjectType>('Autoline');
   protected sortColumn = signal<string>('');
   protected sortDirection = signal<'asc' | 'desc'>('asc');
+  protected showDeleteModal = signal(false);
+  protected selectedDeleteDate = signal('');
+
+  protected availableDates = computed(() => {
+    return this.store.dates();
+  });
 
     protected chartOptions: ChartConfiguration['options'] = {
     responsive: true,
@@ -684,6 +735,35 @@ export class DashboardComponent {
   onCampaign(e: Event) { this.selectedCampaign.set((e.target as HTMLSelectElement).value); }
   onSubgroup(e: Event) { this.selectedSubgroup.set((e.target as HTMLSelectElement).value); }
   onProject(e: Event) { this.selectedProject.set((e.target as HTMLSelectElement).value as ProjectType); }
+  
+  onDeleteDateSelect(e: Event) {
+    this.selectedDeleteDate.set((e.target as HTMLSelectElement).value);
+  }
+  
+  async deleteSelectedDate() {
+    const date = this.selectedDeleteDate();
+    if (!date) return;
+    
+    try {
+      // Находим все отчеты для выбранной даты
+      const reports = this.store.reports().filter(r => r.date === date);
+      
+      // Удаляем каждый отчет
+      for (const report of reports) {
+        await this.store.deleteReport(report.id);
+      }
+      
+      // Закрываем модальное окно
+      this.showDeleteModal.set(false);
+      this.selectedDeleteDate.set('');
+      
+      // Показываем уведомление об успехе
+      alert(`Данные за ${date} успешно удалены!`);
+      
+    } catch (error) {
+      alert('Ошибка при удалении данных');
+    }
+  }
 
   constructor() {
     // дефолтный период — весь диапазон
