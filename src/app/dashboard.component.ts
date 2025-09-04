@@ -280,6 +280,112 @@ import type { Campaign, ProjectType } from './types';
         </div>
       </div>
     }
+
+    <!-- Модальное окно с деталями точки графика -->
+    @if (showDetailsModal()) {
+      <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-800">Детали за {{ selectedPointData()?.date }}</h3>
+            <button class="text-gray-400 hover:text-gray-600" (click)="showDetailsModal.set(false)">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+          
+          @if (selectedPointData()) {
+            <div class="space-y-6">
+              <!-- Общая информация -->
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="p-4 bg-blue-50 rounded-lg">
+                  <div class="text-sm font-medium text-blue-600">Метрика</div>
+                  <div class="text-lg font-bold text-blue-800">{{ selectedPointData()?.metric }}</div>
+                </div>
+                <div class="p-4 bg-green-50 rounded-lg">
+                  <div class="text-sm font-medium text-green-600">Значение</div>
+                  <div class="text-lg font-bold text-green-800">
+                    @if (selectedPointData()?.metric === 'Бюджет' || selectedPointData()?.metric === 'СРМ') {
+                      €{{ selectedPointData()?.value?.toLocaleString() }}
+                    } @else if (selectedPointData()?.metric === 'CTR' || selectedPointData()?.metric === 'CR') {
+                      {{ (selectedPointData()?.value * 100)?.toFixed(2) }}%
+                    } @else {
+                      {{ selectedPointData()?.value?.toLocaleString() }}
+                    }
+                  </div>
+                </div>
+                <div class="p-4 bg-purple-50 rounded-lg">
+                  <div class="text-sm font-medium text-purple-600">Проект</div>
+                  <div class="text-lg font-bold text-purple-800">{{ selectedProject() }}</div>
+                </div>
+                <div class="p-4 bg-orange-50 rounded-lg">
+                  <div class="text-sm font-medium text-orange-600">Кампаний</div>
+                  <div class="text-lg font-bold text-orange-800">{{ selectedPointData()?.campaigns?.length || 0 }}</div>
+                </div>
+              </div>
+
+              <!-- Таблица кампаний -->
+              <div>
+                <h4 class="text-md font-semibold text-gray-700 mb-3">Кампании</h4>
+                <div class="overflow-x-auto">
+                  <table class="min-w-full bg-white border border-gray-200 rounded-lg">
+                    <thead class="bg-gray-50">
+                      <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Название</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Бюджет</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Конверсии</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CTR</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CR</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Подгруппы</th>
+                      </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                      @for (campaign of selectedPointData()?.campaigns; track campaign.name) {
+                        <tr class="hover:bg-gray-50">
+                          <td class="px-4 py-3 font-medium text-gray-900">{{ campaign.name }}</td>
+                          <td class="px-4 py-3 text-gray-900">€{{ campaign.budgetEur?.toLocaleString() }}</td>
+                          <td class="px-4 py-3 text-gray-900">{{ campaign.conversions?.toLocaleString() }}</td>
+                          <td class="px-4 py-3 text-gray-900">{{ (campaign.ctrPercent * 100)?.toFixed(2) }}%</td>
+                          <td class="px-4 py-3 text-gray-900">{{ (campaign.crPercent * 100)?.toFixed(2) }}%</td>
+                          <td class="px-4 py-3 text-gray-900">{{ campaign.subgroups?.length || 0 }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Общие метрики -->
+              <div>
+                <h4 class="text-md font-semibold text-gray-700 mb-3">Общие метрики</h4>
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                  <div class="p-3 bg-gray-50 rounded-lg">
+                    <div class="text-sm font-medium text-gray-600">Бюджет</div>
+                    <div class="text-lg font-bold text-gray-800">€{{ selectedPointData()?.total?.budgetEur?.toLocaleString() }}</div>
+                  </div>
+                  <div class="p-3 bg-gray-50 rounded-lg">
+                    <div class="text-sm font-medium text-gray-600">Конверсии</div>
+                    <div class="text-lg font-bold text-gray-800">{{ selectedPointData()?.total?.conversions?.toLocaleString() }}</div>
+                  </div>
+                  <div class="p-3 bg-gray-50 rounded-lg">
+                    <div class="text-sm font-medium text-gray-600">Показы</div>
+                    <div class="text-lg font-bold text-gray-800">{{ selectedPointData()?.total?.impressions?.toLocaleString() }}</div>
+                  </div>
+                  <div class="p-3 bg-gray-50 rounded-lg">
+                    <div class="text-sm font-medium text-gray-600">Клики</div>
+                    <div class="text-lg font-bold text-gray-800">{{ selectedPointData()?.total?.clicks?.toLocaleString() }}</div>
+                  </div>
+                  <div class="p-3 bg-gray-50 rounded-lg">
+                    <div class="text-sm font-medium text-gray-600">СРМ</div>
+                    <div class="text-lg font-bold text-gray-800">€{{ selectedPointData()?.total?.cpmEur?.toFixed(2) }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
   `,
   styles: [
     `:host{display:block}
@@ -298,6 +404,8 @@ export class DashboardComponent {
   protected sortDirection = signal<'asc' | 'desc'>('asc');
   protected showDeleteModal = signal(false);
   protected selectedDeleteDate = signal('');
+  protected showDetailsModal = signal(false);
+  protected selectedPointData = signal<any>(null);
 
   protected availableDates = computed(() => {
     return this.store.dates();
@@ -360,6 +468,13 @@ export class DashboardComponent {
       point: {
         radius: 4,
         hoverRadius: 6
+      }
+    },
+    onClick: (event, elements) => {
+      if (elements.length > 0) {
+        const dataIndex = elements[0].index;
+        const datasetIndex = elements[0].datasetIndex;
+        this.showPointDetails(dataIndex, datasetIndex);
       }
     }
   };
@@ -763,6 +878,57 @@ export class DashboardComponent {
     } catch (error) {
       alert('Ошибка при удалении данных');
     }
+  }
+
+  showPointDetails(dataIndex: number, datasetIndex: number) {
+    const dates = this.filteredDates();
+    const date = dates[dataIndex];
+    const metricName = this.getMetricNameByDatasetIndex(datasetIndex);
+    
+    if (!date || !metricName) return;
+    
+    // Получаем данные для выбранной даты и метрики
+    const reports = this.store.reports().filter(r => r.date === date);
+    const projectData = reports.find(r => r.project === this.selectedProject());
+    
+    if (!projectData) return;
+    
+    const pointData = {
+      date,
+      metric: metricName,
+      value: this.getMetricValue(projectData, metricName),
+      campaigns: projectData.campaigns,
+      total: projectData.total
+    };
+    
+    this.selectedPointData.set(pointData);
+    this.showDetailsModal.set(true);
+  }
+
+  private getMetricNameByDatasetIndex(datasetIndex: number): string {
+    const metrics = [
+      'Бюджет', 'Конверсии', 'send_new_message', 'sales_full_tel', 
+      'button_messenger', 'Показы', 'Клики', 'СРМ', 'CTR', 'CR'
+    ];
+    return metrics[datasetIndex] || '';
+  }
+
+  private getMetricValue(report: any, metricName: string): number {
+    const metricMap: { [key: string]: string } = {
+      'Бюджет': 'budgetEur',
+      'Конверсии': 'conversions',
+      'send_new_message': 'sendNewMessage',
+      'sales_full_tel': 'salesFullTel',
+      'button_messenger': 'buttonMessenger',
+      'Показы': 'impressions',
+      'Клики': 'clicks',
+      'СРМ': 'cpmEur',
+      'CTR': 'ctrPercent',
+      'CR': 'crPercent'
+    };
+    
+    const field = metricMap[metricName];
+    return field ? report.total[field] : 0;
   }
 
   constructor() {
