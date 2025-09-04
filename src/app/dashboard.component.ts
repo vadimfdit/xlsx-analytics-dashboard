@@ -105,7 +105,7 @@ import type { Campaign, ProjectType } from './types';
               }
             </div>
           </div>
-          <button 
+          <button
             class="px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 shadow-md flex items-center"
             (click)="exportChart()"
           >
@@ -326,7 +326,7 @@ export class DashboardComponent {
   protected campaignNames = computed(() => {
     const names = new Set<string>();
     const project = this.selectedProject();
-    
+
     for (const r of this.store.reports()) {
       if (r.project !== project) continue;
       for (const c of r.campaigns) names.add(c.name);
@@ -351,15 +351,15 @@ export class DashboardComponent {
     const from = this.from();
     const to = this.to();
     const project = this.selectedProject();
-    
+
     let filteredDates = dates.filter(d => (!from || d >= from) && (!to || d <= to));
-    
+
     // Всегда фильтруем по проекту
     filteredDates = filteredDates.filter(d => {
       const report = this.store.reports().find(r => r.id === d);
       return report?.project === project;
     });
-    
+
     return filteredDates;
   });
 
@@ -406,7 +406,7 @@ export class DashboardComponent {
     const cpmEurSeries: number[] = [];
     const ctrPercentSeries: number[] = [];
     const crPercentSeries: number[] = [];
-    
+
     for (const d of labels) {
       const src = this.store.reports().find(x => x.id === d)!;
       let base = src.total;
@@ -432,86 +432,86 @@ export class DashboardComponent {
       ctrPercentSeries.push(base.ctrPercent * 100); // Конвертируем в проценты
       crPercentSeries.push(base.crPercent * 100); // Конвертируем в проценты
     }
-    
+
     return {
       labels,
       datasets: [
-        { 
-          label: 'Бюджет текущий период', 
-          data: budgetSeries, 
-          borderColor: '#3b82f6', 
+        {
+          label: 'Бюджет текущий период',
+          data: budgetSeries,
+          borderColor: '#3b82f6',
           backgroundColor: 'rgba(59, 130, 246, 0.1)',
           borderWidth: 3,
           fill: false
         },
-        { 
-          label: 'Конверсии текущий период', 
-          data: conversionsSeries, 
-          borderColor: '#10b981', 
+        {
+          label: 'Конверсии текущий период',
+          data: conversionsSeries,
+          borderColor: '#10b981',
           backgroundColor: 'rgba(16, 185, 129, 0.1)',
           borderWidth: 3,
           fill: false
         },
-        { 
-          label: 'send_new_message', 
-          data: sendNewMessageSeries, 
-          borderColor: '#ef4444', 
+        {
+          label: 'send_new_message',
+          data: sendNewMessageSeries,
+          borderColor: '#ef4444',
           backgroundColor: 'rgba(239, 68, 68, 0.1)',
           borderWidth: 2,
           fill: false
         },
-        { 
-          label: 'sales_full_tel', 
-          data: salesFullTelSeries, 
-          borderColor: '#f97316', 
+        {
+          label: 'sales_full_tel',
+          data: salesFullTelSeries,
+          borderColor: '#f97316',
           backgroundColor: 'rgba(249, 115, 22, 0.1)',
           borderWidth: 2,
           fill: false
         },
-        { 
-          label: 'button_messenger', 
-          data: buttonMessengerSeries, 
-          borderColor: '#f59e0b', 
+        {
+          label: 'button_messenger',
+          data: buttonMessengerSeries,
+          borderColor: '#f59e0b',
           backgroundColor: 'rgba(245, 158, 11, 0.1)',
           borderWidth: 2,
           fill: false
         },
-        { 
-          label: 'Показы текущий период', 
-          data: impressionsSeries, 
-          borderColor: '#06b6d4', 
+        {
+          label: 'Показы текущий период',
+          data: impressionsSeries,
+          borderColor: '#06b6d4',
           backgroundColor: 'rgba(6, 182, 212, 0.1)',
           borderWidth: 2,
           fill: false
         },
-        { 
-          label: 'Клики текущий период', 
-          data: clicksSeries, 
-          borderColor: '#8b5cf6', 
+        {
+          label: 'Клики текущий период',
+          data: clicksSeries,
+          borderColor: '#8b5cf6',
           backgroundColor: 'rgba(139, 92, 246, 0.1)',
           borderWidth: 2,
           fill: false
         },
-        { 
-          label: 'СРМ текущий период', 
-          data: cpmEurSeries, 
-          borderColor: '#ec4899', 
+        {
+          label: 'СРМ текущий период',
+          data: cpmEurSeries,
+          borderColor: '#ec4899',
           backgroundColor: 'rgba(236, 72, 153, 0.1)',
           borderWidth: 2,
           fill: false
         },
-        { 
-          label: 'CTR текущий период', 
-          data: ctrPercentSeries, 
-          borderColor: '#6366f1', 
+        {
+          label: 'CTR текущий период',
+          data: ctrPercentSeries,
+          borderColor: '#6366f1',
           backgroundColor: 'rgba(99, 102, 241, 0.1)',
           borderWidth: 2,
           fill: false
         },
-        { 
-          label: 'CR текущий период', 
-          data: crPercentSeries, 
-          borderColor: '#64748b', 
+        {
+          label: 'CR текущий период',
+          data: crPercentSeries,
+          borderColor: '#64748b',
           backgroundColor: 'rgba(100, 116, 139, 0.1)',
           borderWidth: 2,
           fill: false
@@ -553,42 +553,42 @@ export class DashboardComponent {
     }
     const ctrAvg = labels.length ? ctrSum / labels.length : 0;
     const crAvg = labels.length ? crSum / labels.length : 0;
-    return { 
-      budget, conversions, sendNewMessage, salesFullTel, buttonMessenger, 
-      clicks, impressions, cpmEur, ctrAvg, crAvg 
+    return {
+      budget, conversions, sendNewMessage, salesFullTel, buttonMessenger,
+      clicks, impressions, cpmEur, ctrAvg, crAvg
     };
   });
 
   protected tableRows = computed(() => {
-    const byName = new Map<string, { 
-      budgetEur: number; conversions: number; sendNewMessage: number; salesFullTel: number; 
-      buttonMessenger: number; impressions: number; clicks: number; cpmEur: number; 
-      ctrPercent: number; crPercent: number; days: number 
+    const byName = new Map<string, {
+      budgetEur: number; conversions: number; sendNewMessage: number; salesFullTel: number;
+      buttonMessenger: number; impressions: number; clicks: number; cpmEur: number;
+      ctrPercent: number; crPercent: number; days: number
     }>();
     const camp = this.selectedCampaign();
     const subgroup = this.selectedSubgroup();
     const project = this.selectedProject();
-    
+
     for (const d of this.filteredDates()) {
       const report = this.store.reports().find(x => x.id === d)!;
       if (!camp) {
         // агрегируем кампании
         for (const r of report.campaigns) {
-          const agg = byName.get(r.name) ?? { 
-            budgetEur: 0, conversions: 0, sendNewMessage: 0, salesFullTel: 0, 
-            buttonMessenger: 0, impressions: 0, clicks: 0, cpmEur: 0, 
-            ctrPercent: 0, crPercent: 0, days: 0 
+          const agg = byName.get(r.name) ?? {
+            budgetEur: 0, conversions: 0, sendNewMessage: 0, salesFullTel: 0,
+            buttonMessenger: 0, impressions: 0, clicks: 0, cpmEur: 0,
+            ctrPercent: 0, crPercent: 0, days: 0
           };
-          agg.budgetEur += r.budgetEur; 
-          agg.conversions += r.conversions; 
+          agg.budgetEur += r.budgetEur;
+          agg.conversions += r.conversions;
           agg.sendNewMessage += r.sendNewMessage;
           agg.salesFullTel += r.salesFullTel;
           agg.buttonMessenger += r.buttonMessenger;
           agg.impressions += r.impressions;
           agg.clicks += r.clicks;
           agg.cpmEur += r.cpmEur;
-          agg.ctrPercent += r.ctrPercent; 
-          agg.crPercent += r.crPercent; 
+          agg.ctrPercent += r.ctrPercent;
+          agg.crPercent += r.crPercent;
           agg.days += 1;
           byName.set(r.name, agg);
         }
@@ -597,42 +597,42 @@ export class DashboardComponent {
         if (!c) continue;
         if (!subgroup) {
           for (const sg of c.subgroups) {
-            const agg = byName.get(sg.name) ?? { 
-              budgetEur: 0, conversions: 0, sendNewMessage: 0, salesFullTel: 0, 
-              buttonMessenger: 0, impressions: 0, clicks: 0, cpmEur: 0, 
-              ctrPercent: 0, crPercent: 0, days: 0 
+            const agg = byName.get(sg.name) ?? {
+              budgetEur: 0, conversions: 0, sendNewMessage: 0, salesFullTel: 0,
+              buttonMessenger: 0, impressions: 0, clicks: 0, cpmEur: 0,
+              ctrPercent: 0, crPercent: 0, days: 0
             };
-            agg.budgetEur += sg.budgetEur; 
-            agg.conversions += sg.conversions; 
+            agg.budgetEur += sg.budgetEur;
+            agg.conversions += sg.conversions;
             agg.sendNewMessage += sg.sendNewMessage;
             agg.salesFullTel += sg.salesFullTel;
             agg.buttonMessenger += sg.buttonMessenger;
             agg.impressions += sg.impressions;
             agg.clicks += sg.clicks;
             agg.cpmEur += sg.cpmEur;
-            agg.ctrPercent += sg.ctrPercent; 
-            agg.crPercent += sg.crPercent; 
+            agg.ctrPercent += sg.ctrPercent;
+            agg.crPercent += sg.crPercent;
             agg.days += 1;
             byName.set(sg.name, agg);
           }
         } else {
           const sg = c.subgroups.find(s => s.name === subgroup);
           if (!sg) continue;
-          const agg = byName.get(sg.name) ?? { 
-            budgetEur: 0, conversions: 0, sendNewMessage: 0, salesFullTel: 0, 
-            buttonMessenger: 0, impressions: 0, clicks: 0, cpmEur: 0, 
-            ctrPercent: 0, crPercent: 0, days: 0 
+          const agg = byName.get(sg.name) ?? {
+            budgetEur: 0, conversions: 0, sendNewMessage: 0, salesFullTel: 0,
+            buttonMessenger: 0, impressions: 0, clicks: 0, cpmEur: 0,
+            ctrPercent: 0, crPercent: 0, days: 0
           };
-          agg.budgetEur += sg.budgetEur; 
-          agg.conversions += sg.conversions; 
+          agg.budgetEur += sg.budgetEur;
+          agg.conversions += sg.conversions;
           agg.sendNewMessage += sg.sendNewMessage;
           agg.salesFullTel += sg.salesFullTel;
           agg.buttonMessenger += sg.buttonMessenger;
           agg.impressions += sg.impressions;
           agg.clicks += sg.clicks;
           agg.cpmEur += sg.cpmEur;
-          agg.ctrPercent += sg.ctrPercent; 
-          agg.crPercent += sg.crPercent; 
+          agg.ctrPercent += sg.ctrPercent;
+          agg.crPercent += sg.crPercent;
           agg.days += 1;
           byName.set(sg.name, agg);
         }
@@ -655,18 +655,18 @@ export class DashboardComponent {
     // Сортировка
     const sortCol = this.sortColumn();
     const sortDir = this.sortDirection();
-    
+
     if (sortCol) {
       rows.sort((a, b) => {
         let aVal: any = a[sortCol as keyof typeof a];
         let bVal: any = b[sortCol as keyof typeof a];
-        
+
         // Для строковых значений
         if (typeof aVal === 'string') {
           aVal = aVal.toLowerCase();
           bVal = bVal.toLowerCase();
         }
-        
+
         if (aVal < bVal) return sortDir === 'asc' ? -1 : 1;
         if (aVal > bVal) return sortDir === 'asc' ? 1 : -1;
         return 0;
@@ -675,7 +675,7 @@ export class DashboardComponent {
       // По умолчанию сортируем по бюджету по убыванию
       rows.sort((a, b) => b.budgetEur - a.budgetEur);
     }
-    
+
     return rows;
   });
 
