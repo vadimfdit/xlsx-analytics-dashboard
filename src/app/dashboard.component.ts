@@ -124,7 +124,7 @@ import type { Campaign, ProjectType } from './types';
           </button>
         </div>
         <div class="h-96">
-                      <canvas baseChart [type]="'line'" [data]="chartData()" [options]="chartOptions" (click)="onChartClick($event)"></canvas>
+                      <canvas baseChart [type]="'line'" [data]="chartData()" [options]="chartOptions"></canvas>
         </div>
       </div>
 
@@ -468,6 +468,15 @@ export class DashboardComponent {
       point: {
         radius: 4,
         hoverRadius: 6
+      }
+    },
+    onClick: (event, elements) => {
+      console.log('Chart onClick triggered, elements:', elements);
+      if (elements && elements.length > 0) {
+        const dataIndex = elements[0].index;
+        const datasetIndex = elements[0].datasetIndex;
+        console.log('Clicking on dataIndex:', dataIndex, 'datasetIndex:', datasetIndex);
+        this.showPointDetails(dataIndex, datasetIndex);
       }
     }
   };
@@ -877,6 +886,9 @@ export class DashboardComponent {
     console.log('showPointDetails called with:', { dataIndex, datasetIndex });
     
     const dates = this.filteredDates();
+    console.log('Available dates:', dates);
+    console.log('dataIndex:', dataIndex, 'dates length:', dates.length);
+    
     const date = dates[dataIndex];
     const metricName = this.getMetricNameByDatasetIndex(datasetIndex);
     
@@ -887,11 +899,16 @@ export class DashboardComponent {
       return;
     }
     
+    // Извлекаем чистую дату без проекта
+    const cleanDate = date.split('-').slice(0, 3).join('-'); // Берем только YYYY-MM-DD
+    console.log('Clean date:', cleanDate);
+    
     // Получаем данные для выбранной даты и метрики
-    const reports = this.store.reports().filter(r => r.date === date);
+    const reports = this.store.reports().filter(r => r.date === cleanDate);
     const projectData = reports.find(r => r.project === this.selectedProject());
     
     console.log('Found reports:', reports.length, 'projectData:', !!projectData);
+    console.log('Selected project:', this.selectedProject());
     
     if (!projectData) {
       console.log('No project data found');
@@ -899,7 +916,7 @@ export class DashboardComponent {
     }
     
     const pointData = {
-      date,
+      date: cleanDate,
       metric: metricName,
       value: this.getMetricValue(projectData, metricName),
       campaigns: projectData.campaigns,
@@ -910,6 +927,7 @@ export class DashboardComponent {
     
     this.selectedPointData.set(pointData);
     this.showDetailsModal.set(true);
+    console.log('Modal should be open now');
   }
 
   private getMetricNameByDatasetIndex(datasetIndex: number): string {
@@ -917,6 +935,7 @@ export class DashboardComponent {
       'Бюджет', 'Конверсии', 'send_new_message', 'sales_full_tel', 
       'button_messenger', 'Показы', 'Клики', 'СРМ', 'CTR', 'CR'
     ];
+    console.log('getMetricNameByDatasetIndex:', { datasetIndex, metrics, result: metrics[datasetIndex] });
     return metrics[datasetIndex] || '';
   }
 
@@ -938,33 +957,7 @@ export class DashboardComponent {
     return field ? report.total[field] : 0;
   }
 
-  onChartClick(event: MouseEvent) {
-    const canvas = event.target as HTMLCanvasElement;
-    const rect = canvas.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
-    
-    // Получаем контекст графика
-    const chart = (canvas as any).chart;
-    if (!chart) {
-      console.log('Chart not found');
-      return;
-    }
-    
-    // Получаем элементы под курсором
-    const elements = chart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, true);
-    
-    console.log('Chart click detected, elements:', elements.length);
-    
-    if (elements.length > 0) {
-      const dataIndex = elements[0].index;
-      const datasetIndex = elements[0].datasetIndex;
-      console.log('Clicking on dataIndex:', dataIndex, 'datasetIndex:', datasetIndex);
-      this.showPointDetails(dataIndex, datasetIndex);
-    } else {
-      console.log('No elements found at click position');
-    }
-  }
+
 
   constructor() {
     // дефолтный период — весь диапазон
