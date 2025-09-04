@@ -124,7 +124,7 @@ import type { Campaign, ProjectType } from './types';
           </button>
         </div>
         <div class="h-96">
-          <canvas baseChart [type]="'line'" [data]="chartData()" [options]="chartOptions"></canvas>
+                      <canvas baseChart [type]="'line'" [data]="chartData()" [options]="chartOptions" (click)="onChartClick($event)"></canvas>
         </div>
       </div>
 
@@ -468,13 +468,6 @@ export class DashboardComponent {
       point: {
         radius: 4,
         hoverRadius: 6
-      }
-    },
-    onClick: (event, elements) => {
-      if (elements.length > 0) {
-        const dataIndex = elements[0].index;
-        const datasetIndex = elements[0].datasetIndex;
-        this.showPointDetails(dataIndex, datasetIndex);
       }
     }
   };
@@ -881,17 +874,29 @@ export class DashboardComponent {
   }
 
   showPointDetails(dataIndex: number, datasetIndex: number) {
+    console.log('showPointDetails called with:', { dataIndex, datasetIndex });
+    
     const dates = this.filteredDates();
     const date = dates[dataIndex];
     const metricName = this.getMetricNameByDatasetIndex(datasetIndex);
     
-    if (!date || !metricName) return;
+    console.log('Found date:', date, 'metricName:', metricName);
+    
+    if (!date || !metricName) {
+      console.log('Missing date or metricName');
+      return;
+    }
     
     // Получаем данные для выбранной даты и метрики
     const reports = this.store.reports().filter(r => r.date === date);
     const projectData = reports.find(r => r.project === this.selectedProject());
     
-    if (!projectData) return;
+    console.log('Found reports:', reports.length, 'projectData:', !!projectData);
+    
+    if (!projectData) {
+      console.log('No project data found');
+      return;
+    }
     
     const pointData = {
       date,
@@ -900,6 +905,8 @@ export class DashboardComponent {
       campaigns: projectData.campaigns,
       total: projectData.total
     };
+    
+    console.log('Point data:', pointData);
     
     this.selectedPointData.set(pointData);
     this.showDetailsModal.set(true);
@@ -929,6 +936,34 @@ export class DashboardComponent {
     
     const field = metricMap[metricName];
     return field ? report.total[field] : 0;
+  }
+
+  onChartClick(event: MouseEvent) {
+    const canvas = event.target as HTMLCanvasElement;
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    
+    // Получаем контекст графика
+    const chart = (canvas as any).chart;
+    if (!chart) {
+      console.log('Chart not found');
+      return;
+    }
+    
+    // Получаем элементы под курсором
+    const elements = chart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, true);
+    
+    console.log('Chart click detected, elements:', elements.length);
+    
+    if (elements.length > 0) {
+      const dataIndex = elements[0].index;
+      const datasetIndex = elements[0].datasetIndex;
+      console.log('Clicking on dataIndex:', dataIndex, 'datasetIndex:', datasetIndex);
+      this.showPointDetails(dataIndex, datasetIndex);
+    } else {
+      console.log('No elements found at click position');
+    }
   }
 
   constructor() {
