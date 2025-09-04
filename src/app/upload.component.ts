@@ -3,6 +3,7 @@ import { DataStoreService } from './data.store';
 import { parseDailyReport } from './xlsx.parser';
 import { ToastrService } from 'ngx-toastr';
 import { ConfirmModalComponent } from './confirm-modal.component';
+import { ProjectType } from './types';
 
 @Component({
   selector: 'app-upload',
@@ -10,10 +11,18 @@ import { ConfirmModalComponent } from './confirm-modal.component';
   imports: [ConfirmModalComponent],
   template: `
     <div class="space-y-6">
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">Дата отчета</label>
           <input type="date" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" [value]="date()" (change)="onDate($event)" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Проект</label>
+          <select class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" [value]="project()" (change)="onProject($event)">
+            <option value="Autoline">Autoline</option>
+            <option value="Machinery">Machinery</option>
+            <option value="Agroline">Agroline</option>
+          </select>
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">XLSX файл</label>
@@ -64,6 +73,7 @@ export class UploadComponent {
   private toastr = inject(ToastrService);
   protected file = signal<File | null>(null);
   protected date = signal<string>(new Date().toISOString().slice(0, 10));
+  protected project = signal<ProjectType>('Autoline');
   protected showConfirmModal = signal<boolean>(false);
 
   onFile(e: Event) {
@@ -77,12 +87,17 @@ export class UploadComponent {
     this.date.set(input.value);
   }
 
+  onProject(e: Event) {
+    const select = e.target as HTMLSelectElement;
+    this.project.set(select.value as ProjectType);
+  }
+
   async import() {
     const f = this.file();
     if (!f) return;
     
     try {
-      const report = await parseDailyReport(f, this.date());
+      const report = await parseDailyReport(f, this.date(), this.project());
       await this.store.upsertReport(report);
       this.file.set(null);
       this.toastr.success('Данные успешно импортированы!', 'Успех', {

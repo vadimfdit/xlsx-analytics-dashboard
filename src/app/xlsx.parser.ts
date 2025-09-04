@@ -1,5 +1,5 @@
 import * as XLSX from 'xlsx';
-import type { Campaign, CampaignRowMetrics, DailyReport, Subgroup } from './types';
+import type { Campaign, CampaignRowMetrics, DailyReport, Subgroup, ProjectType } from './types';
 
 function parseEuro(value: any): number {
   if (value == null || value === '-') return 0;
@@ -37,7 +37,7 @@ function metricsFromRow(row: Record<string, any>): CampaignRowMetrics {
   };
 }
 
-export function parseDailyReport(file: File, dateId: string): Promise<DailyReport> {
+export function parseDailyReport(file: File, dateId: string, project: ProjectType): Promise<DailyReport> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -172,6 +172,7 @@ export function parseDailyReport(file: File, dateId: string): Promise<DailyRepor
                  const report: DailyReport = {
            id: dateId,
            date: dateId,
+           project,
            total,
            campaigns,
          };
