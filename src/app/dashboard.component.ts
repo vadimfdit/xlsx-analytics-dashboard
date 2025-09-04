@@ -1,9 +1,10 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration } from 'chart.js';
 import { DataStoreService } from './data.store';
 import type { Campaign, ProjectType } from './types';
+import { GoogleAdsService, IndustryBenchmark } from './google-ads.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -622,14 +623,45 @@ import type { Campaign, ProjectType } from './types';
       <div class="p-6 rounded-lg bg-white shadow-lg border border-gray-100 mb-8">
         <div class="flex items-center justify-between mb-6">
           <h3 class="text-xl font-semibold text-gray-800">📊 Бенчмаркинг</h3>
-          <div class="flex items-center space-x-2">
-            <span class="text-sm text-gray-500">Отрасль:</span>
-            <select class="text-sm border border-gray-300 rounded px-2 py-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500" (change)="onBenchmarkIndustry($event)">
-              <option value="automotive" selected>Автомобильная</option>
-              <option value="machinery">Машиностроение</option>
-              <option value="agriculture">Сельское хозяйство</option>
-              <option value="general">Общие показатели</option>
-            </select>
+          <div class="flex items-center space-x-4">
+            <!-- Статус API -->
+            <div class="flex items-center space-x-2">
+              <span class="text-sm text-gray-500">API:</span>
+              @if (apiStatus() === 'loading') {
+                <div class="flex items-center space-x-1">
+                  <div class="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
+                  <span class="text-xs text-yellow-600">Завантаження...</span>
+                </div>
+              } @else if (apiStatus() === 'connected') {
+                <div class="flex items-center space-x-1">
+                  <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <span class="text-xs text-green-600">Підключено</span>
+                </div>
+              } @else {
+                <div class="flex items-center space-x-1">
+                  <div class="w-2 h-2 bg-red-500 rounded-full"></div>
+                  <span class="text-xs text-red-600">Помилка</span>
+                </div>
+              }
+            </div>
+            
+            <!-- Джерело даних -->
+            @if (apiBenchmarks()) {
+              <div class="text-xs text-gray-500">
+                Джерело: {{ apiBenchmarks()!.budget.source }}
+              </div>
+            }
+            
+            <!-- Вибір галузі -->
+            <div class="flex items-center space-x-2">
+              <span class="text-sm text-gray-500">Отрасль:</span>
+              <select class="text-sm border border-gray-300 rounded px-2 py-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500" (change)="onBenchmarkIndustry($event)">
+                <option value="automotive" selected>Автомобильная</option>
+                <option value="machinery">Машиностроение</option>
+                <option value="agriculture">Сельское хозяйство</option>
+                <option value="general">Общие показатели</option>
+              </select>
+            </div>
           </div>
         </div>
         
@@ -1145,8 +1177,9 @@ import type { Campaign, ProjectType } from './types';
     `,
   ],
 })
-export class DashboardComponent {
+export class DashboardComponent implements OnInit {
   private store = inject(DataStoreService);
+  private googleAdsService = inject(GoogleAdsService);
   protected Math = Math;
   protected from = signal<string>('');
   protected to = signal<string>('');
@@ -1172,6 +1205,8 @@ export class DashboardComponent {
   protected anomalySensitivity = signal<'low' | 'medium' | 'high'>('medium');
   protected recommendationPriority = signal<'all' | 'high' | 'medium' | 'low'>('high');
   protected benchmarkIndustry = signal<'automotive' | 'machinery' | 'agriculture' | 'general'>('automotive');
+  protected apiBenchmarks = signal<IndustryBenchmark | null>(null);
+  protected apiStatus = signal<'loading' | 'connected' | 'error'>('loading');
 
   protected availableDates = computed(() => {
     return this.store.dates();
@@ -1706,37 +1741,71 @@ export class DashboardComponent {
     };
   });
 
-  protected benchmarkData = computed(() => {
+  ngOnInit() {
+    this.loadGoogleAdsBenchmarks();
+  }
+
+  private loadGoogleAdsBenchmarks() {
+    this.apiStatus.set('loading');
+    
+    this.googleAdsService.getIndustryBenchmarks(this.benchmarkIndustry()).subscribe({
+      next: (benchmarks) => {
+        this.apiBenchmarks.set(benchmarks);
+        this.apiStatus.set('connected');
+      },
+      error: (error) => {
+        console.error('Помилка завантаження бенчмарків:', error);
+        this.apiStatus.set('error');
+      }
+    });
+  }
+
+    protected benchmarkData = computed(() => {
     const currentTotals = this.totals();
     const industry = this.benchmarkIndustry();
+    const apiData = this.apiBenchmarks();
     
-    // Бенчмарки для разных отраслей
-    const benchmarks = {
-      automotive: {
-        budget: { average: 15000, best: 25000 },
-        conversions: { average: 85, best: 150 },
-        ctr: { average: 0.045, best: 0.08 },
-        cr: { average: 0.025, best: 0.045 }
-      },
-      machinery: {
-        budget: { average: 12000, best: 20000 },
-        conversions: { average: 65, best: 120 },
-        ctr: { average: 0.035, best: 0.065 },
-        cr: { average: 0.020, best: 0.035 }
-      },
-      agriculture: {
-        budget: { average: 8000, best: 15000 },
-        conversions: { average: 45, best: 90 },
-        ctr: { average: 0.030, best: 0.055 },
-        cr: { average: 0.018, best: 0.030 }
-      },
-      general: {
-        budget: { average: 10000, best: 18000 },
-        conversions: { average: 60, best: 110 },
-        ctr: { average: 0.040, best: 0.070 },
-        cr: { average: 0.022, best: 0.040 }
-      }
-    };
+    // Використовуємо дані з API, якщо доступні, інакше fallback
+    let benchmarks: any;
+    
+    if (apiData) {
+      benchmarks = {
+        [industry]: {
+          budget: { average: apiData.budget.average, best: apiData.budget.best },
+          conversions: { average: apiData.conversions.average, best: apiData.conversions.best },
+          ctr: { average: apiData.ctr.average, best: apiData.ctr.best },
+          cr: { average: apiData.cr.average, best: apiData.cr.best }
+        }
+      };
+    } else {
+      // Fallback дані
+      benchmarks = {
+        automotive: {
+          budget: { average: 15000, best: 25000 },
+          conversions: { average: 85, best: 150 },
+          ctr: { average: 0.045, best: 0.08 },
+          cr: { average: 0.025, best: 0.045 }
+        },
+        machinery: {
+          budget: { average: 12000, best: 20000 },
+          conversions: { average: 65, best: 120 },
+          ctr: { average: 0.035, best: 0.065 },
+          cr: { average: 0.020, best: 0.035 }
+        },
+        agriculture: {
+          budget: { average: 8000, best: 15000 },
+          conversions: { average: 45, best: 90 },
+          ctr: { average: 0.030, best: 0.055 },
+          cr: { average: 0.018, best: 0.030 }
+        },
+        general: {
+          budget: { average: 10000, best: 18000 },
+          conversions: { average: 60, best: 110 },
+          ctr: { average: 0.040, best: 0.070 },
+          cr: { average: 0.022, best: 0.040 }
+        }
+      };
+    }
     
     const industryBenchmarks = benchmarks[industry];
     
@@ -2735,7 +2804,9 @@ export class DashboardComponent {
 
   onBenchmarkIndustry(e: Event) {
     const input = e.target as HTMLSelectElement;
-    this.benchmarkIndustry.set(input.value as 'automotive' | 'machinery' | 'agriculture' | 'general');
+    const newIndustry = input.value as 'automotive' | 'machinery' | 'agriculture' | 'general';
+    this.benchmarkIndustry.set(newIndustry);
+    this.loadGoogleAdsBenchmarks();
   }
 
   getBenchmarkClass(performance: number): string {
