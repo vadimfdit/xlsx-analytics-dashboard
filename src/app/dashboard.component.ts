@@ -34,8 +34,7 @@ import type { Campaign, ProjectType } from './types';
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">Проект</label>
-              <select class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" (change)="onProject($event)">
-                <option value="">Все проекты</option>
+              <select class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" [value]="selectedProject()" (change)="onProject($event)">
                 <option value="Autoline">Autoline</option>
                 <option value="Machinery">Machinery</option>
                 <option value="Agroline">Agroline</option>
@@ -249,7 +248,7 @@ export class DashboardComponent {
   protected to = signal<string>('');
   protected selectedCampaign = signal<string>('');
   protected selectedSubgroup = signal<string>('');
-  protected selectedProject = signal<ProjectType | ''>('');
+  protected selectedProject = signal<ProjectType>('Autoline');
   protected sortColumn = signal<string>('');
   protected sortDirection = signal<'asc' | 'desc'>('asc');
 
@@ -329,7 +328,7 @@ export class DashboardComponent {
     const project = this.selectedProject();
     
     for (const r of this.store.reports()) {
-      if (project && r.project !== project) continue;
+      if (r.project !== project) continue;
       for (const c of r.campaigns) names.add(c.name);
     }
     return Array.from(names).sort();
@@ -355,12 +354,11 @@ export class DashboardComponent {
     
     let filteredDates = dates.filter(d => (!from || d >= from) && (!to || d <= to));
     
-    if (project) {
-      filteredDates = filteredDates.filter(d => {
-        const report = this.store.reports().find(r => r.id === d);
-        return report?.project === project;
-      });
-    }
+    // Всегда фильтруем по проекту
+    filteredDates = filteredDates.filter(d => {
+      const report = this.store.reports().find(r => r.id === d);
+      return report?.project === project;
+    });
     
     return filteredDates;
   });
@@ -573,7 +571,6 @@ export class DashboardComponent {
     
     for (const d of this.filteredDates()) {
       const report = this.store.reports().find(x => x.id === d)!;
-      if (project && report.project !== project) continue;
       if (!camp) {
         // агрегируем кампании
         for (const r of report.campaigns) {
@@ -686,7 +683,7 @@ export class DashboardComponent {
   onTo(e: Event) { this.to.set((e.target as HTMLSelectElement).value); }
   onCampaign(e: Event) { this.selectedCampaign.set((e.target as HTMLSelectElement).value); }
   onSubgroup(e: Event) { this.selectedSubgroup.set((e.target as HTMLSelectElement).value); }
-  onProject(e: Event) { this.selectedProject.set((e.target as HTMLSelectElement).value as ProjectType | ''); }
+  onProject(e: Event) { this.selectedProject.set((e.target as HTMLSelectElement).value as ProjectType); }
 
   constructor() {
     // дефолтный период — весь диапазон
