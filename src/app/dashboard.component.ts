@@ -337,6 +337,122 @@ import type { Campaign, ProjectType } from './types';
         </div>
       </div>
 
+      <!-- KPI дашборд -->
+      <div class="p-6 rounded-lg bg-white shadow-lg border border-gray-100 mb-8">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-xl font-semibold text-gray-800">KPI дашборд</h3>
+          <div class="flex items-center space-x-2">
+            <span class="text-sm text-gray-500">Цели:</span>
+            <button class="text-sm text-blue-600 hover:text-blue-800" (click)="showKPISettings.set(true)">
+              Настроить
+            </button>
+          </div>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- Бюджет KPI -->
+          <div class="p-4 bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm font-medium text-blue-600">Бюджет</span>
+              <span class="text-xs px-2 py-1 rounded-full" [class]="getKPIClass(kpiMetrics().budget.achievement)">
+                {{ kpiMetrics().budget.achievement.toFixed(0) }}%
+              </span>
+            </div>
+            <div class="text-lg font-bold text-blue-800">€{{ kpiMetrics().budget.current.toLocaleString() }}</div>
+            <div class="text-xs text-blue-600 mt-1">
+              Цель: €{{ kpiMetrics().budget.target.toLocaleString() }}
+            </div>
+            <div class="mt-2">
+              <div class="w-full bg-blue-200 rounded-full h-2">
+                <div class="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                     [style.width.%]="Math.min(kpiMetrics().budget.achievement, 100)"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Конверсии KPI -->
+          <div class="p-4 bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm font-medium text-green-600">Конверсии</span>
+              <span class="text-xs px-2 py-1 rounded-full" [class]="getKPIClass(kpiMetrics().conversions.achievement)">
+                {{ kpiMetrics().conversions.achievement.toFixed(0) }}%
+              </span>
+            </div>
+            <div class="text-lg font-bold text-green-800">{{ kpiMetrics().conversions.current.toLocaleString() }}</div>
+            <div class="text-xs text-green-600 mt-1">
+              Цель: {{ kpiMetrics().conversions.target.toLocaleString() }}
+            </div>
+            <div class="mt-2">
+              <div class="w-full bg-green-200 rounded-full h-2">
+                <div class="bg-green-600 h-2 rounded-full transition-all duration-300" 
+                     [style.width.%]="Math.min(kpiMetrics().conversions.achievement, 100)"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CTR KPI -->
+          <div class="p-4 bg-gradient-to-br from-indigo-50 to-indigo-100 border border-indigo-200 rounded-lg">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm font-medium text-indigo-600">CTR</span>
+              <span class="text-xs px-2 py-1 rounded-full" [class]="getKPIClass(kpiMetrics().ctr.achievement)">
+                {{ kpiMetrics().ctr.achievement.toFixed(0) }}%
+              </span>
+            </div>
+            <div class="text-lg font-bold text-indigo-800">{{ (kpiMetrics().ctr.current * 100).toFixed(2) }}%</div>
+            <div class="text-xs text-indigo-600 mt-1">
+              Цель: {{ (kpiMetrics().ctr.target * 100).toFixed(2) }}%
+            </div>
+            <div class="mt-2">
+              <div class="w-full bg-indigo-200 rounded-full h-2">
+                <div class="bg-indigo-600 h-2 rounded-full transition-all duration-300" 
+                     [style.width.%]="Math.min(kpiMetrics().ctr.achievement, 100)"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CR KPI -->
+          <div class="p-4 bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-lg">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm font-medium text-purple-600">CR</span>
+              <span class="text-xs px-2 py-1 rounded-full" [class]="getKPIClass(kpiMetrics().cr.achievement)">
+                {{ kpiMetrics().cr.achievement.toFixed(0) }}%
+              </span>
+            </div>
+            <div class="text-lg font-bold text-purple-800">{{ (kpiMetrics().cr.current * 100).toFixed(2) }}%</div>
+            <div class="text-xs text-purple-600 mt-1">
+              Цель: {{ (kpiMetrics().cr.target * 100).toFixed(2) }}%
+            </div>
+            <div class="mt-2">
+              <div class="w-full bg-purple-200 rounded-full h-2">
+                <div class="bg-purple-600 h-2 rounded-full transition-all duration-300" 
+                     [style.width.%]="Math.min(kpiMetrics().cr.achievement, 100)"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Сводка KPI -->
+        <div class="mt-6">
+          <h4 class="text-md font-semibold text-gray-700 mb-3">Сводка достижений</h4>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="p-3 bg-gray-50 rounded-lg">
+              <div class="text-sm font-medium text-gray-600">Достигнуто целей</div>
+              <div class="text-lg font-bold text-gray-800">{{ kpiSummary().achieved }}/{{ kpiSummary().total }}</div>
+            </div>
+            <div class="p-3 bg-gray-50 rounded-lg">
+              <div class="text-sm font-medium text-gray-600">Средний прогресс</div>
+              <div class="text-lg font-bold text-gray-800">{{ kpiSummary().averageProgress.toFixed(1) }}%</div>
+            </div>
+            <div class="p-3 bg-gray-50 rounded-lg">
+              <div class="text-sm font-medium text-gray-600">Статус</div>
+              <div class="text-lg font-bold" [class]="getKPISummaryClass(kpiSummary().status)">
+                {{ getKPISummaryStatus(kpiSummary().status) }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="p-6 rounded-lg bg-white shadow-lg border border-gray-100">
         <div class="flex items-center justify-between mb-6">
           <div class="flex items-center space-x-4">
@@ -629,6 +745,7 @@ import type { Campaign, ProjectType } from './types';
 })
 export class DashboardComponent {
   private store = inject(DataStoreService);
+  protected Math = Math;
   protected from = signal<string>('');
   protected to = signal<string>('');
   protected selectedCampaign = signal<string>('');
@@ -642,6 +759,7 @@ export class DashboardComponent {
   protected selectedPointData = signal<any>(null);
   protected trendPeriod = signal<number>(30);
   protected comparisonPeriod = signal<'previous_week' | 'previous_month' | 'same_period_last_year'>('previous_month');
+  protected showKPISettings = signal<boolean>(false);
 
   protected availableDates = computed(() => {
     return this.store.dates();
@@ -819,6 +937,68 @@ export class DashboardComponent {
         previous: previousMetrics.cr,
         change: calculateChange(currentMetrics.cr, previousMetrics.cr)
       }
+    };
+  });
+
+  protected kpiMetrics = computed(() => {
+    const currentTotals = this.totals();
+    const project = this.selectedProject();
+    
+    // Получаем цели из localStorage или используем дефолтные
+    const kpiTargets = this.getKPITargets(project);
+    
+    const calculateAchievement = (current: number, target: number) => {
+      if (target === 0) return 0;
+      return (current / target) * 100;
+    };
+
+    return {
+      budget: {
+        current: currentTotals.budget,
+        target: kpiTargets.budget,
+        achievement: calculateAchievement(currentTotals.budget, kpiTargets.budget)
+      },
+      conversions: {
+        current: currentTotals.conversions,
+        target: kpiTargets.conversions,
+        achievement: calculateAchievement(currentTotals.conversions, kpiTargets.conversions)
+      },
+      ctr: {
+        current: currentTotals.ctrAvg,
+        target: kpiTargets.ctr,
+        achievement: calculateAchievement(currentTotals.ctrAvg, kpiTargets.ctr)
+      },
+      cr: {
+        current: currentTotals.crAvg,
+        target: kpiTargets.cr,
+        achievement: calculateAchievement(currentTotals.crAvg, kpiTargets.cr)
+      }
+    };
+  });
+
+  protected kpiSummary = computed(() => {
+    const metrics = this.kpiMetrics();
+    const achievements = [
+      metrics.budget.achievement,
+      metrics.conversions.achievement,
+      metrics.ctr.achievement,
+      metrics.cr.achievement
+    ];
+    
+    const achieved = achievements.filter(a => a >= 100).length;
+    const averageProgress = achievements.reduce((sum, a) => sum + a, 0) / achievements.length;
+    
+    let status: 'excellent' | 'good' | 'warning' | 'critical';
+    if (averageProgress >= 100) status = 'excellent';
+    else if (averageProgress >= 80) status = 'good';
+    else if (averageProgress >= 60) status = 'warning';
+    else status = 'critical';
+    
+    return {
+      achieved,
+      total: achievements.length,
+      averageProgress,
+      status
     };
   });
 
@@ -1420,6 +1600,53 @@ export class DashboardComponent {
     if (change < -10) return 'Критично';
     if (change < 0) return 'Требует внимания';
     return 'Стабильно';
+  }
+
+  private getKPITargets(project: ProjectType) {
+    const key = `kpi_targets_${project}`;
+    const stored = localStorage.getItem(key);
+    
+    if (stored) {
+      return JSON.parse(stored);
+    }
+    
+    // Дефолтные цели
+    const defaultTargets = {
+      budget: 10000, // €10,000
+      conversions: 100, // 100 конверсий
+      ctr: 0.05, // 5%
+      cr: 0.02 // 2%
+    };
+    
+    localStorage.setItem(key, JSON.stringify(defaultTargets));
+    return defaultTargets;
+  }
+
+  getKPIClass(achievement: number): string {
+    if (achievement >= 100) return 'bg-green-100 text-green-800';
+    if (achievement >= 80) return 'bg-blue-100 text-blue-800';
+    if (achievement >= 60) return 'bg-yellow-100 text-yellow-800';
+    return 'bg-red-100 text-red-800';
+  }
+
+  getKPISummaryClass(status: 'excellent' | 'good' | 'warning' | 'critical'): string {
+    switch (status) {
+      case 'excellent': return 'text-green-600';
+      case 'good': return 'text-blue-600';
+      case 'warning': return 'text-yellow-600';
+      case 'critical': return 'text-red-600';
+      default: return 'text-gray-600';
+    }
+  }
+
+  getKPISummaryStatus(status: 'excellent' | 'good' | 'warning' | 'critical'): string {
+    switch (status) {
+      case 'excellent': return 'Отлично';
+      case 'good': return 'Хорошо';
+      case 'warning': return 'Требует внимания';
+      case 'critical': return 'Критично';
+      default: return 'Неизвестно';
+    }
   }
 
   getTrendClass(trend: number): string {
