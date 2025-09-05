@@ -1,40 +1,40 @@
 import { Component, computed, effect, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { BaseChartDirective } from 'ng2-charts';
-import { ChartConfiguration } from 'chart.js';
+import { NgApexchartsModule } from 'ng-apexcharts';
 import { DataStoreService } from './data.store';
 import type { Campaign, ProjectType } from './types';
-import { GoogleAdsService, IndustryBenchmark } from './google-ads.service';
+import { ApexOptions } from 'apexcharts';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, BaseChartDirective],
+  imports: [CommonModule, NgApexchartsModule],
   template: `
     @if (hasData()) {
-      <div class="space-y-6">
-        <div class="p-6 rounded-lg bg-white shadow-lg border border-gray-100 mb-8">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-semibold text-gray-800">Фильтры</h3>
-            <button class="px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:from-red-700 hover:to-red-800 transition-all duration-200 shadow-md flex items-center" (click)="showDeleteModal.set(true)">
-              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-              </svg>
-              Управление данными
-            </button>
+      <div class="max-w-7xl mx-auto p-6 space-y-6">
+        <div class="bg-white border border-gray-200 rounded-lg p-6">
+          <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center space-x-3">
+              <div class="p-1.5 bg-blue-600 rounded-lg">
+                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.414A1 1 0 013 6.707V4z"></path>
+                </svg>
+              </div>
+              <h3 class="text-xl font-semibold text-gray-900">Фильтры и настройки</h3>
+            </div>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">От</label>
-              <input type="date" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" [value]="from()" (change)="onFrom($event)" />
+              <input type="date" class="w-full h-10 border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" [value]="from()" (change)="onFrom($event)" />
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">До</label>
-              <input type="date" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" [value]="to()" (change)="onTo($event)" />
+              <input type="date" class="w-full h-10 border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" [value]="to()" (change)="onTo($event)" />
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">Проект</label>
-              <select class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" [value]="selectedProject()" (change)="onProject($event)">
+              <select class="w-full h-10 border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" [value]="selectedProject()" (change)="onProject($event)">
                 <option value="Autoline">Autoline</option>
                 <option value="Machinery">Machinery</option>
                 <option value="Agroline">Agroline</option>
@@ -42,7 +42,7 @@ import { GoogleAdsService, IndustryBenchmark } from './google-ads.service';
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">Кампания</label>
-              <select class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" (change)="onCampaign($event)">
+              <select class="w-full h-10 border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" (change)="onCampaign($event)">
                 <option value="">Все</option>
                 @for (c of campaignNames(); track c) {
                   <option [value]="c">{{ c }}</option>
@@ -51,7 +51,7 @@ import { GoogleAdsService, IndustryBenchmark } from './google-ads.service';
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">Подгруппа</label>
-              <select class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed" (change)="onSubgroup($event)" [disabled]="!selectedCampaign()">
+              <select class="w-full h-10 border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed" (change)="onSubgroup($event)" [disabled]="!selectedCampaign()">
                 <option value="">Все</option>
                 @for (sg of subgroupNames(); track sg) {
                   <option [value]="sg">{{ sg }}</option>
@@ -61,116 +61,242 @@ import { GoogleAdsService, IndustryBenchmark } from './google-ads.service';
           </div>
         </div>
 
-      <div class="grid grid-cols-2 md:grid-cols-5 gap-6 mb-8">
-        <div class="p-6 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 shadow-sm">
-          <div class="text-sm font-medium text-blue-600 mb-2">Бюджет текущий период</div>
-          <div class="text-xl font-bold text-blue-800 break-words">€{{ totals().budget.toLocaleString('uk-UA') }}</div>
-        </div>
-        <div class="p-6 rounded-lg bg-gradient-to-br from-green-50 to-green-100 border border-green-200 shadow-sm">
-          <div class="text-sm font-medium text-green-600 mb-2">Конверсии текущий период</div>
-          <div class="text-xl font-bold text-green-800 break-words">{{ totals().conversions.toLocaleString('uk-UA') }}</div>
-        </div>
-        <div class="p-6 rounded-lg bg-gradient-to-br from-red-50 to-red-100 border border-red-200 shadow-sm">
-          <div class="text-sm font-medium text-red-600 mb-2">send_new_message</div>
-          <div class="text-xl font-bold text-red-800 break-words">{{ totals().sendNewMessage.toLocaleString('uk-UA') }}</div>
-        </div>
-        <div class="p-6 rounded-lg bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 shadow-sm">
-          <div class="text-sm font-medium text-orange-600 mb-2">sales_full_tel</div>
-          <div class="text-xl font-bold text-orange-800 break-words">{{ totals().salesFullTel.toLocaleString('uk-UA') }}</div>
-        </div>
-        <div class="p-6 rounded-lg bg-gradient-to-br from-yellow-50 to-yellow-100 border border-yellow-200 shadow-sm">
-          <div class="text-sm font-medium text-yellow-600 mb-2">button_messenger</div>
-          <div class="text-xl font-bold text-yellow-800 break-words">{{ totals().buttonMessenger.toLocaleString('uk-UA') }}</div>
-        </div>
-        <div class="p-6 rounded-lg bg-gradient-to-br from-cyan-50 to-cyan-100 border border-cyan-200 shadow-sm">
-          <div class="text-sm font-medium text-cyan-600 mb-2">Показы текущий период</div>
-          <div class="text-xl font-bold text-cyan-800 break-words">{{ totals().impressions.toLocaleString('uk-UA') }}</div>
-        </div>
-        <div class="p-6 rounded-lg bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 shadow-sm">
-          <div class="text-sm font-medium text-purple-600 mb-2">Клики текущий период</div>
-          <div class="text-xl font-bold text-purple-800 break-words">{{ totals().clicks.toLocaleString('uk-UA') }}</div>
-        </div>
-        <div class="p-6 rounded-lg bg-gradient-to-br from-pink-50 to-pink-100 border border-pink-200 shadow-sm">
-          <div class="text-sm font-medium text-pink-600 mb-2">СРМ текущий период</div>
-          <div class="text-xl font-bold text-pink-800 break-words">€{{ totals().cpmEur.toFixed(2) }}</div>
-        </div>
-        <div class="p-6 rounded-lg bg-gradient-to-br from-indigo-50 to-indigo-100 border border-indigo-200 shadow-sm">
-          <div class="text-sm font-medium text-indigo-600 mb-2">CTR текущий период</div>
-          <div class="text-xl font-bold text-indigo-800 break-words">{{ (totals().ctrAvg * 100).toFixed(2) }}%</div>
-        </div>
-        <div class="p-6 rounded-lg bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200 shadow-sm">
-          <div class="text-sm font-medium text-slate-600 mb-2">CR текущий период</div>
-          <div class="text-xl font-bold text-slate-800 break-words">{{ (totals().crAvg * 100).toFixed(2) }}%</div>
-        </div>
+
+      <!-- Табовая навигация -->
+      <div class="bg-white border border-gray-200 rounded-lg">
+        <nav class="flex overflow-x-auto px-4 py-2 scrollbar-hide" aria-label="Tabs">
+          <button
+            class="px-3 py-2 text-sm font-medium rounded-md transition-colors mr-1 whitespace-nowrap flex-shrink-0"
+            [class]="activeTab() === 'detailed' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'"
+            (click)="activeTab.set('detailed')">
+            Детальная аналитика
+          </button>
+          <button
+            class="px-3 py-2 text-sm font-medium rounded-md transition-colors mr-1 whitespace-nowrap flex-shrink-0"
+            [class]="activeTab() === 'overview' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'"
+            (click)="activeTab.set('overview')">
+            Общая статистика
+          </button>
+          <button
+            class="px-3 py-2 text-sm font-medium rounded-md transition-colors mr-1 whitespace-nowrap flex-shrink-0"
+            [class]="activeTab() === 'kpi' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'"
+            (click)="activeTab.set('kpi')">
+            KPI дашборд
+          </button>
+          <button
+            class="px-3 py-2 text-sm font-medium rounded-md transition-colors mr-1 whitespace-nowrap flex-shrink-0"
+            [class]="activeTab() === 'trends' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'"
+            (click)="activeTab.set('trends')">
+            Тренды и прогнозы
+          </button>
+          <button
+            class="px-3 py-2 text-sm font-medium rounded-md transition-colors mr-1 whitespace-nowrap flex-shrink-0"
+            [class]="activeTab() === 'comparison' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'"
+            (click)="activeTab.set('comparison')">
+            Сравнение периодов
+          </button>
+          <button
+            class="px-3 py-2 text-sm font-medium rounded-md transition-colors mr-1 whitespace-nowrap flex-shrink-0"
+            [class]="activeTab() === 'anomalies' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'"
+            (click)="activeTab.set('anomalies')">
+            Аномалии и рекомендации
+          </button>
+        </nav>
       </div>
 
-      <!-- Секция трендов и прогнозов -->
-      <div class="p-6 rounded-lg bg-white shadow-lg border border-gray-100 mb-8">
+      <!-- Общая статистика -->
+      @if (activeTab() === 'overview') {
+      <div class="bg-white border border-gray-200 rounded-lg p-6">
         <div class="flex items-center justify-between mb-6">
-          <h3 class="text-xl font-semibold text-gray-800">Тренды и прогнозы</h3>
+          <div class="flex items-center space-x-3">
+            <div class="p-2 bg-blue-600 rounded-lg">
+              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-xl font-semibold text-gray-900">Общая статистика</h3>
+              <p class="text-gray-600 text-sm">Обзор ключевых показателей</p>
+            </div>
+          </div>
+          <div class="px-3 py-1 bg-gray-100 border border-gray-200 rounded-md">
+            <div class="text-sm font-medium text-gray-700">
+              @if (filteredDates().length > 0) {
+                {{ filteredDates().length }} {{ filteredDates().length === 1 ? 'день' : filteredDates().length < 5 ? 'дня' : 'дней' }}
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Основные метрики -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div class="flex items-center justify-between mb-2">
+              <div class="p-1 bg-blue-600 rounded">
+                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                </svg>
+              </div>
+              <div class="text-xs font-medium text-blue-600">Общий бюджет</div>
+            </div>
+            <div class="text-xl font-semibold text-gray-900 mb-1">€{{ totals().budget.toLocaleString('uk-UA') }}</div>
+            <div class="text-xs text-gray-500">За весь период</div>
+          </div>
+
+          <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+            <div class="flex items-center justify-between mb-2">
+              <div class="p-1 bg-green-600 rounded">
+                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+              </div>
+              <div class="text-xs font-medium text-green-600">Общие конверсии</div>
+            </div>
+            <div class="text-xl font-semibold text-gray-900 mb-1">{{ totals().conversions.toLocaleString('uk-UA') }}</div>
+            <div class="text-xs text-gray-500">За весь период</div>
+          </div>
+
+          <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+            <div class="flex items-center justify-between mb-2">
+              <div class="p-1 bg-purple-600 rounded">
+                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                </svg>
+              </div>
+              <div class="text-xs font-medium text-purple-600">Средний CTR</div>
+            </div>
+            <div class="text-xl font-semibold text-gray-900 mb-1">{{ (totals().ctrAvg * 100).toFixed(2) }}%</div>
+            <div class="text-xs text-gray-500">За весь период</div>
+          </div>
+
+          <div class="bg-orange-50 border border-orange-200 rounded-lg p-4">
+            <div class="flex items-center justify-between mb-2">
+              <div class="p-1 bg-orange-600 rounded">
+                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+              </div>
+              <div class="text-xs font-medium text-orange-600">Средний CR</div>
+            </div>
+            <div class="text-xl font-semibold text-gray-900 mb-1">{{ (totals().crAvg * 100).toFixed(2) }}%</div>
+            <div class="text-xs text-gray-500">За весь период</div>
+          </div>
+        </div>
+
+        <!-- Краткая сводка по кампаниям -->
+        <div class="mt-6">
+          <h4 class="text-md font-semibold text-gray-700 mb-3">Топ кампании по бюджету</h4>
+          <div class="space-y-2">
+            @for (campaign of tableRows().slice(0, 5); track campaign.name) {
+              <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <span class="font-medium text-gray-800">{{ campaign.name }}</span>
+                <div class="flex items-center space-x-4 text-sm text-gray-600">
+                  <span>€{{ campaign.budgetEur.toLocaleString('uk-UA') }}</span>
+                  <span>{{ campaign.conversions.toLocaleString('uk-UA') }} конверсий</span>
+                  <span>{{ (campaign.ctrPercent * 100).toFixed(2) }}% CTR</span>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+      }
+
+      <!-- Секция трендов и прогнозов -->
+      @if (activeTab() === 'trends') {
+      <div class="bg-white border border-gray-200 rounded-lg p-6">
+        <div class="flex items-center justify-between mb-6">
+          <div class="flex items-center space-x-3">
+            <div class="p-2 bg-purple-600 rounded-lg">
+              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+              </svg>
+            </div>
+            <div>
+              <div class="flex items-center space-x-2">
+                <h3 class="text-xl font-semibold text-gray-900">Тренды и прогнозы</h3>
+                <div class="group relative">
+                  <svg class="w-4 h-4 text-gray-400 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                  <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity z-10 w-80 min-w-64 break-words pointer-events-none">
+                    <div class="font-semibold mb-1">Тренды и прогнозы</div>
+                    <div class="text-xs mb-2">Анализ динамики показателей и прогнозирование будущих значений</div>
+                    <div class="text-xs">
+                      <div><span class="font-medium text-blue-400">Тренд:</span> изменение показателя в % за день</div>
+                      <div><span class="font-medium text-green-400">Текущее значение:</span> среднее за последний период</div>
+                      <div><span class="font-medium text-purple-400">Прогноз:</span> ожидаемое значение на следующий день</div>
+                      <div><span class="font-medium text-yellow-400">Период анализа:</span> количество дней для расчета тренда</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <p class="text-gray-600 text-sm">Анализ динамики показателей</p>
+            </div>
+          </div>
           <div class="flex items-center space-x-2">
-            <span class="text-sm text-gray-500">Период анализа:</span>
-            <select class="text-sm border border-gray-300 rounded px-2 py-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500" (change)="onTrendPeriod($event)">
+            <span class="text-sm font-medium text-gray-700">Период анализа:</span>
+            <select class="text-sm border border-gray-300 rounded-md px-3 py-1 focus:ring-2 focus:ring-purple-500 focus:border-purple-500" (change)="onTrendPeriod($event)">
               <option value="7">7 дней</option>
               <option value="14">14 дней</option>
               <option value="30" selected>30 дней</option>
             </select>
           </div>
         </div>
-        
+
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <!-- Бюджет тренд -->
-          <div class="p-4 bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg">
+          <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
             <div class="flex items-center justify-between mb-2">
               <span class="text-sm font-medium text-blue-600">Бюджет</span>
               <span class="text-xs px-2 py-1 rounded-full" [class]="getTrendClass(trends().budget.trend)">
                 {{ getTrendIcon(trends().budget.trend) }} {{ trends().budget.trend > 0 ? '+' : '' }}{{ trends().budget.trend.toFixed(1) }}%
               </span>
             </div>
-            <div class="text-lg font-bold text-blue-800">€{{ trends().budget.current.toLocaleString() }}</div>
-            <div class="text-xs text-blue-600 mt-1">
+            <div class="text-lg font-semibold text-gray-900">€{{ trends().budget.current.toLocaleString() }}</div>
+            <div class="text-xs text-gray-500 mt-1">
               Прогноз: €{{ trends().budget.forecast.toLocaleString() }}
             </div>
           </div>
 
           <!-- Конверсии тренд -->
-          <div class="p-4 bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg">
+          <div class="p-4 bg-green-50 border border-green-200 rounded-lg">
             <div class="flex items-center justify-between mb-2">
               <span class="text-sm font-medium text-green-600">Конверсии</span>
               <span class="text-xs px-2 py-1 rounded-full" [class]="getTrendClass(trends().conversions.trend)">
                 {{ getTrendIcon(trends().conversions.trend) }} {{ trends().conversions.trend > 0 ? '+' : '' }}{{ trends().conversions.trend.toFixed(1) }}%
               </span>
             </div>
-            <div class="text-lg font-bold text-green-800">{{ trends().conversions.current.toLocaleString() }}</div>
+            <div class="text-lg font-semibold text-gray-900">{{ trends().conversions.current.toLocaleString() }}</div>
             <div class="text-xs text-green-600 mt-1">
               Прогноз: {{ trends().conversions.forecast.toLocaleString() }}
             </div>
           </div>
 
           <!-- CTR тренд -->
-          <div class="p-4 bg-gradient-to-br from-indigo-50 to-indigo-100 border border-indigo-200 rounded-lg">
+          <div class="p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
             <div class="flex items-center justify-between mb-2">
               <span class="text-sm font-medium text-indigo-600">CTR</span>
               <span class="text-xs px-2 py-1 rounded-full" [class]="getTrendClass(trends().ctr.trend)">
                 {{ getTrendIcon(trends().ctr.trend) }} {{ trends().ctr.trend > 0 ? '+' : '' }}{{ trends().ctr.trend.toFixed(1) }}%
               </span>
             </div>
-            <div class="text-lg font-bold text-indigo-800">{{ (trends().ctr.current * 100).toFixed(2) }}%</div>
-            <div class="text-xs text-indigo-600 mt-1">
+            <div class="text-lg font-semibold text-gray-900">{{ (trends().ctr.current * 100).toFixed(2) }}%</div>
+            <div class="text-xs text-gray-500 mt-1">
               Прогноз: {{ (trends().ctr.forecast * 100).toFixed(2) }}%
             </div>
           </div>
 
           <!-- CR тренд -->
-          <div class="p-4 bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-lg">
+          <div class="p-4 bg-purple-50 border border-purple-200 rounded-lg">
             <div class="flex items-center justify-between mb-2">
               <span class="text-sm font-medium text-purple-600">CR</span>
               <span class="text-xs px-2 py-1 rounded-full" [class]="getTrendClass(trends().cr.trend)">
                 {{ getTrendIcon(trends().cr.trend) }} {{ trends().cr.trend > 0 ? '+' : '' }}{{ trends().cr.trend.toFixed(1) }}%
               </span>
             </div>
-            <div class="text-lg font-bold text-purple-800">{{ (trends().cr.current * 100).toFixed(2) }}%</div>
-            <div class="text-xs text-purple-600 mt-1">
+            <div class="text-lg font-semibold text-gray-900">{{ (trends().cr.current * 100).toFixed(2) }}%</div>
+            <div class="text-xs text-gray-500 mt-1">
               Прогноз: {{ (trends().cr.forecast * 100).toFixed(2) }}%
             </div>
           </div>
@@ -180,78 +306,114 @@ import { GoogleAdsService, IndustryBenchmark } from './google-ads.service';
         <div class="mt-6">
           <h4 class="text-md font-semibold text-gray-700 mb-3">График трендов</h4>
           <div class="h-64">
-            <canvas baseChart [type]="'line'" [data]="trendChartData()" [options]="trendChartOptions"></canvas>
+            <apx-chart [series]="trendChartSeries()" [chart]="trendChartConfig" [xaxis]="trendChartXAxis()" [yaxis]="trendChartYAxis" [colors]="trendChartColors" [stroke]="trendChartStroke" [legend]="trendChartLegend" [tooltip]="trendChartTooltip"></apx-chart>
           </div>
         </div>
       </div>
+      }
 
       <!-- Секция сравнения периодов -->
-      <div class="p-6 rounded-lg bg-white shadow-lg border border-gray-100 mb-8">
+      @if (activeTab() === 'comparison') {
+      <div class="bg-white border border-gray-200 rounded-lg p-6">
         <div class="flex items-center justify-between mb-6">
-          <h3 class="text-xl font-semibold text-gray-800">Сравнение периодов</h3>
+          <div class="flex items-center space-x-3">
+            <div class="p-2 bg-emerald-600 rounded-lg">
+              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+              </svg>
+            </div>
+            <div>
+              <div class="flex items-center space-x-2">
+                <h3 class="text-xl font-semibold text-gray-900">Сравнение периодов</h3>
+                <div class="group relative">
+                  <svg class="w-4 h-4 text-gray-400 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                  <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity z-10 w-80 min-w-64 break-words pointer-events-none">
+                    <div class="font-semibold mb-1">Сравнение периодов</div>
+                    <div class="text-xs mb-2">Сопоставление показателей текущего периода с предыдущими периодами</div>
+                    <div class="text-xs">
+                      <div><span class="font-medium text-green-400">Текущий период:</span> выбранные даты из фильтров</div>
+                      <div><span class="font-medium text-blue-400">Предыдущая неделя:</span> тот же период прошлой недели</div>
+                      <div><span class="font-medium text-purple-400">Предыдущий месяц:</span> тот же период прошлого месяца</div>
+                      <div><span class="font-medium text-yellow-400">Прошлый год:</span> тот же период год назад</div>
+                      <div><span class="font-medium text-red-400">Изменение:</span> разница в % между периодами</div>
+                    </div>
+                    <div class="text-xs mt-2">
+                      <div><span class="font-medium text-green-400">Отлично:</span> рост >10%</div>
+                      <div><span class="font-medium text-blue-400">Хорошо:</span> рост 0-10%</div>
+                      <div><span class="font-medium text-orange-400">Требует внимания:</span> падение 0-10%</div>
+                      <div><span class="font-medium text-red-400">Критично:</span> падение >10%</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <p class="text-gray-600 text-sm">Сопоставление показателей</p>
+            </div>
+          </div>
           <div class="flex items-center space-x-2">
-            <span class="text-sm text-gray-500">Сравнить с:</span>
-            <select class="text-sm border border-gray-300 rounded px-2 py-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500" (change)="onComparisonPeriod($event)">
+            <span class="text-sm font-medium text-gray-700">Сравнить с:</span>
+            <select class="text-sm border border-gray-300 rounded-md px-3 py-1 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500" (change)="onComparisonPeriod($event)">
               <option value="previous_week">Предыдущая неделя</option>
               <option value="previous_month" selected>Предыдущий месяц</option>
               <option value="same_period_last_year">Тот же период прошлого года</option>
             </select>
           </div>
         </div>
-        
+
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <!-- Бюджет сравнение -->
-          <div class="p-4 bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg">
+          <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
             <div class="flex items-center justify-between mb-2">
               <span class="text-sm font-medium text-blue-600">Бюджет</span>
               <span class="text-xs px-2 py-1 rounded-full" [class]="getComparisonClass(comparison().budget.change)">
                 {{ getComparisonIcon(comparison().budget.change) }} {{ comparison().budget.change > 0 ? '+' : '' }}{{ comparison().budget.change.toFixed(1) }}%
               </span>
             </div>
-            <div class="text-lg font-bold text-blue-800">€{{ comparison().budget.current.toLocaleString() }}</div>
-            <div class="text-xs text-blue-600 mt-1">
+            <div class="text-lg font-semibold text-gray-900">€{{ comparison().budget.current.toLocaleString() }}</div>
+            <div class="text-xs text-gray-500 mt-1">
               vs €{{ comparison().budget.previous.toLocaleString() }}
             </div>
           </div>
 
           <!-- Конверсии сравнение -->
-          <div class="p-4 bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg">
+          <div class="p-4 bg-green-50 border border-green-200 rounded-lg">
             <div class="flex items-center justify-between mb-2">
               <span class="text-sm font-medium text-green-600">Конверсии</span>
               <span class="text-xs px-2 py-1 rounded-full" [class]="getComparisonClass(comparison().conversions.change)">
                 {{ getComparisonIcon(comparison().conversions.change) }} {{ comparison().conversions.change > 0 ? '+' : '' }}{{ comparison().conversions.change.toFixed(1) }}%
               </span>
             </div>
-            <div class="text-lg font-bold text-green-800">{{ comparison().conversions.current.toLocaleString() }}</div>
-            <div class="text-xs text-green-600 mt-1">
+            <div class="text-lg font-semibold text-gray-900">{{ comparison().conversions.current.toLocaleString() }}</div>
+            <div class="text-xs text-gray-500 mt-1">
               vs {{ comparison().conversions.previous.toLocaleString() }}
             </div>
           </div>
 
           <!-- CTR сравнение -->
-          <div class="p-4 bg-gradient-to-br from-indigo-50 to-indigo-100 border border-indigo-200 rounded-lg">
+          <div class="p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
             <div class="flex items-center justify-between mb-2">
               <span class="text-sm font-medium text-indigo-600">CTR</span>
               <span class="text-xs px-2 py-1 rounded-full" [class]="getComparisonClass(comparison().ctr.change)">
                 {{ getComparisonIcon(comparison().ctr.change) }} {{ comparison().ctr.change > 0 ? '+' : '' }}{{ comparison().ctr.change.toFixed(1) }}%
               </span>
             </div>
-            <div class="text-lg font-bold text-indigo-800">{{ (comparison().ctr.current * 100).toFixed(2) }}%</div>
-            <div class="text-xs text-indigo-600 mt-1">
+            <div class="text-lg font-semibold text-gray-900">{{ (comparison().ctr.current * 100).toFixed(2) }}%</div>
+            <div class="text-xs text-gray-500 mt-1">
               vs {{ (comparison().ctr.previous * 100).toFixed(2) }}%
             </div>
           </div>
 
           <!-- CR сравнение -->
-          <div class="p-4 bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-lg">
+          <div class="p-4 bg-purple-50 border border-purple-200 rounded-lg">
             <div class="flex items-center justify-between mb-2">
               <span class="text-sm font-medium text-purple-600">CR</span>
               <span class="text-xs px-2 py-1 rounded-full" [class]="getComparisonClass(comparison().cr.change)">
                 {{ getComparisonIcon(comparison().cr.change) }} {{ comparison().cr.change > 0 ? '+' : '' }}{{ comparison().cr.change.toFixed(1) }}%
               </span>
             </div>
-            <div class="text-lg font-bold text-purple-800">{{ (comparison().cr.current * 100).toFixed(2) }}%</div>
-            <div class="text-xs text-purple-600 mt-1">
+            <div class="text-lg font-semibold text-gray-900">{{ (comparison().cr.current * 100).toFixed(2) }}%</div>
+            <div class="text-xs text-gray-500 mt-1">
               vs {{ (comparison().cr.previous * 100).toFixed(2) }}%
             </div>
           </div>
@@ -259,9 +421,14 @@ import { GoogleAdsService, IndustryBenchmark } from './google-ads.service';
 
         <!-- Детальная таблица сравнения -->
         <div class="mt-6">
-          <h4 class="text-md font-semibold text-gray-700 mb-3">Детальное сравнение</h4>
-          <div class="overflow-x-auto">
-            <table class="min-w-full bg-white border border-gray-200 rounded-lg">
+          <h4 class="text-lg font-semibold text-slate-800 mb-4 flex items-center">
+            <svg class="w-5 h-5 mr-2 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
+            Детальное сравнение
+          </h4>
+          <div class="overflow-x-auto bg-white border border-gray-200 rounded-lg">
+            <table class="min-w-full">
               <thead class="bg-gray-50">
                 <tr>
                   <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Метрика</th>
@@ -337,95 +504,184 @@ import { GoogleAdsService, IndustryBenchmark } from './google-ads.service';
           </div>
         </div>
       </div>
+      }
 
       <!-- KPI дашборд -->
-      <div class="p-6 rounded-lg bg-white shadow-lg border border-gray-100 mb-8">
+      @if (activeTab() === 'kpi') {
+      <div class="bg-white border border-gray-200 rounded-lg p-6">
         <div class="flex items-center justify-between mb-6">
-          <h3 class="text-xl font-semibold text-gray-800">KPI дашборд</h3>
+          <div class="flex items-center space-x-3">
+            <div class="p-1.5 bg-orange-600 rounded-lg">
+              <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+            </div>
+            <div>
+              <div class="flex items-center space-x-2">
+                <h3 class="text-xl font-semibold text-gray-900">KPI дашборд</h3>
+                <div class="group relative">
+                  <svg class="w-4 h-4 text-gray-400 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                  <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity z-10 w-80 min-w-64 break-words pointer-events-none">
+                    <div class="font-semibold mb-1">KPI (Key Performance Indicators)</div>
+                    <div class="text-xs mb-2">Ключевые показатели эффективности для отслеживания достижения целей</div>
+                    <div class="text-xs">
+                      <div><span class="font-medium text-green-400">Отлично:</span> ≥100%</div>
+                      <div><span class="font-medium text-blue-400">Хорошо:</span> 80-99%</div>
+                      <div><span class="font-medium text-yellow-400">Требует внимания:</span> 60-79%</div>
+                      <div><span class="font-medium text-red-400">Критично:</span> &lt;60%</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <p class="text-gray-600 text-sm">Контроль ключевых показателей</p>
+            </div>
+          </div>
           <div class="flex items-center space-x-2">
-            <span class="text-sm text-gray-500">Цели:</span>
-            <button class="text-sm text-blue-600 hover:text-blue-800" (click)="showKPISettings.set(true)">
+            <span class="text-sm font-medium text-gray-700">Цели:</span>
+            <button class="px-3 py-1 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors text-sm font-medium" (click)="showKPISettings.set(true)">
               Настроить
             </button>
           </div>
         </div>
-        
+
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <!-- Бюджет KPI -->
-          <div class="p-4 bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg">
+          <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
             <div class="flex items-center justify-between mb-2">
-              <span class="text-sm font-medium text-blue-600">Бюджет</span>
+              <div class="flex items-center space-x-1">
+                <span class="text-sm font-medium text-blue-600">Бюджет</span>
+                <div class="group relative">
+                  <svg class="w-3 h-3 text-gray-400 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                  <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity z-10 w-80 min-w-64 break-words pointer-events-none">
+                    <div class="font-semibold mb-1">Бюджет KPI</div>
+                    <div class="text-xs">Показывает процент использования выделенного бюджета на рекламу</div>
+                    <div class="text-xs mt-1">
+                      <div><span class="font-medium">Формула:</span> (Потрачено / Цель) × 100%</div>
+                      <div><span class="font-medium">Цель:</span> Эффективное использование бюджета</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
               <span class="text-xs px-2 py-1 rounded-full" [class]="getKPIClass(kpiMetrics().budget.achievement)">
                 {{ kpiMetrics().budget.achievement.toFixed(0) }}%
               </span>
             </div>
-            <div class="text-lg font-bold text-blue-800">€{{ kpiMetrics().budget.current.toLocaleString() }}</div>
-            <div class="text-xs text-blue-600 mt-1">
+            <div class="text-lg font-semibold text-gray-900">€{{ kpiMetrics().budget.current.toLocaleString() }}</div>
+            <div class="text-xs text-gray-500 mt-1">
               Цель: €{{ kpiMetrics().budget.target.toLocaleString() }}
             </div>
             <div class="mt-2">
               <div class="w-full bg-blue-200 rounded-full h-2">
-                <div class="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                <div class="bg-blue-600 h-2 rounded-full transition-all duration-300"
                      [style.width.%]="Math.min(kpiMetrics().budget.achievement, 100)"></div>
               </div>
             </div>
           </div>
 
           <!-- Конверсии KPI -->
-          <div class="p-4 bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg">
+          <div class="p-4 bg-green-50 border border-green-200 rounded-lg">
             <div class="flex items-center justify-between mb-2">
-              <span class="text-sm font-medium text-green-600">Конверсии</span>
+              <div class="flex items-center space-x-1">
+                <span class="text-sm font-medium text-green-600">Конверсии</span>
+                <div class="group relative">
+                  <svg class="w-3 h-3 text-gray-400 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                  <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity z-10 w-80 min-w-64 break-words pointer-events-none">
+                    <div class="font-semibold mb-1">Конверсии KPI</div>
+                    <div class="text-xs">Количество целевых действий (покупки, заявки, звонки)</div>
+                    <div class="text-xs mt-1">
+                      <div><span class="font-medium">Формула:</span> (Получено / Цель) × 100%</div>
+                      <div><span class="font-medium">Цель:</span> Достижение планового количества конверсий</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
               <span class="text-xs px-2 py-1 rounded-full" [class]="getKPIClass(kpiMetrics().conversions.achievement)">
                 {{ kpiMetrics().conversions.achievement.toFixed(0) }}%
               </span>
             </div>
-            <div class="text-lg font-bold text-green-800">{{ kpiMetrics().conversions.current.toLocaleString() }}</div>
-            <div class="text-xs text-green-600 mt-1">
+            <div class="text-lg font-semibold text-gray-900">{{ kpiMetrics().conversions.current.toLocaleString() }}</div>
+            <div class="text-xs text-gray-500 mt-1">
               Цель: {{ kpiMetrics().conversions.target.toLocaleString() }}
             </div>
             <div class="mt-2">
               <div class="w-full bg-green-200 rounded-full h-2">
-                <div class="bg-green-600 h-2 rounded-full transition-all duration-300" 
+                <div class="bg-green-600 h-2 rounded-full transition-all duration-300"
                      [style.width.%]="Math.min(kpiMetrics().conversions.achievement, 100)"></div>
               </div>
             </div>
           </div>
 
           <!-- CTR KPI -->
-          <div class="p-4 bg-gradient-to-br from-indigo-50 to-indigo-100 border border-indigo-200 rounded-lg">
+          <div class="p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
             <div class="flex items-center justify-between mb-2">
-              <span class="text-sm font-medium text-indigo-600">CTR</span>
+              <div class="flex items-center space-x-1">
+                <span class="text-sm font-medium text-indigo-600">CTR</span>
+                <div class="group relative">
+                  <svg class="w-3 h-3 text-gray-400 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                  <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity z-10 w-80 min-w-64 break-words pointer-events-none">
+                    <div class="font-semibold mb-1">CTR (Click-Through Rate)</div>
+                    <div class="text-xs">Процент кликов по объявлению от общего количества показов</div>
+                    <div class="text-xs mt-1">
+                      <div><span class="font-medium">Формула:</span> (Клики / Показы) × 100%</div>
+                      <div><span class="font-medium">Цель:</span> Высокий CTR = релевантная реклама</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
               <span class="text-xs px-2 py-1 rounded-full" [class]="getKPIClass(kpiMetrics().ctr.achievement)">
                 {{ kpiMetrics().ctr.achievement.toFixed(0) }}%
               </span>
             </div>
-            <div class="text-lg font-bold text-indigo-800">{{ (kpiMetrics().ctr.current * 100).toFixed(2) }}%</div>
-            <div class="text-xs text-indigo-600 mt-1">
+            <div class="text-lg font-semibold text-gray-900">{{ (kpiMetrics().ctr.current * 100).toFixed(2) }}%</div>
+            <div class="text-xs text-gray-500 mt-1">
               Цель: {{ (kpiMetrics().ctr.target * 100).toFixed(2) }}%
             </div>
             <div class="mt-2">
               <div class="w-full bg-indigo-200 rounded-full h-2">
-                <div class="bg-indigo-600 h-2 rounded-full transition-all duration-300" 
+                <div class="bg-indigo-600 h-2 rounded-full transition-all duration-300"
                      [style.width.%]="Math.min(kpiMetrics().ctr.achievement, 100)"></div>
               </div>
             </div>
           </div>
 
           <!-- CR KPI -->
-          <div class="p-4 bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-lg">
+          <div class="p-4 bg-purple-50 border border-purple-200 rounded-lg">
             <div class="flex items-center justify-between mb-2">
-              <span class="text-sm font-medium text-purple-600">CR</span>
+              <div class="flex items-center space-x-1">
+                <span class="text-sm font-medium text-purple-600">CR</span>
+                <div class="group relative">
+                  <svg class="w-3 h-3 text-gray-400 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                  <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity z-10 w-80 min-w-64 break-words pointer-events-none">
+                    <div class="font-semibold mb-1">CR (Conversion Rate)</div>
+                    <div class="text-xs">Процент посетителей, которые совершили целевое действие</div>
+                    <div class="text-xs mt-1">
+                      <div><span class="font-medium">Формула:</span> (Конверсии / Клики) × 100%</div>
+                      <div><span class="font-medium">Цель:</span> Высокий CR = эффективный сайт</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
               <span class="text-xs px-2 py-1 rounded-full" [class]="getKPIClass(kpiMetrics().cr.achievement)">
                 {{ kpiMetrics().cr.achievement.toFixed(0) }}%
               </span>
             </div>
-            <div class="text-lg font-bold text-purple-800">{{ (kpiMetrics().cr.current * 100).toFixed(2) }}%</div>
-            <div class="text-xs text-purple-600 mt-1">
+            <div class="text-lg font-semibold text-gray-900">{{ (kpiMetrics().cr.current * 100).toFixed(2) }}%</div>
+            <div class="text-xs text-gray-500 mt-1">
               Цель: {{ (kpiMetrics().cr.target * 100).toFixed(2) }}%
             </div>
             <div class="mt-2">
               <div class="w-full bg-purple-200 rounded-full h-2">
-                <div class="bg-purple-600 h-2 rounded-full transition-all duration-300" 
+                <div class="bg-purple-600 h-2 rounded-full transition-all duration-300"
                      [style.width.%]="Math.min(kpiMetrics().cr.achievement, 100)"></div>
               </div>
             </div>
@@ -453,21 +709,50 @@ import { GoogleAdsService, IndustryBenchmark } from './google-ads.service';
           </div>
         </div>
       </div>
+      }
 
       <!-- Секция аномалий -->
-      <div class="p-6 rounded-lg bg-white shadow-lg border border-gray-100 mb-8">
+      @if (activeTab() === 'anomalies') {
+      <div class="bg-white border border-gray-200 rounded-lg p-6">
         <div class="flex items-center justify-between mb-6">
-          <h3 class="text-xl font-semibold text-gray-800">🔍 Аномалии и необычные изменения</h3>
+          <div class="flex items-center space-x-3">
+            <div class="p-1.5 bg-red-600 rounded-lg">
+              <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+              </svg>
+            </div>
+            <div>
+              <div class="flex items-center space-x-2">
+                <h3 class="text-xl font-semibold text-gray-900">Аномалии и необычные изменения</h3>
+                <div class="group relative">
+                  <svg class="w-4 h-4 text-gray-400 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                  <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity z-10 w-80 min-w-64 break-words pointer-events-none">
+                    <div class="font-semibold mb-1">Аномалии и необычные изменения</div>
+                    <div class="text-xs mb-2">Автоматическое выявление необычных отклонений в показателях</div>
+                    <div class="text-xs">
+                      <div><span class="font-medium text-red-400">Критично:</span> отклонение >40% (бюджет), >50% (конверсии)</div>
+                      <div><span class="font-medium text-orange-400">Предупреждение:</span> отклонение >20% (бюджет), >30% (конверсии)</div>
+                      <div><span class="font-medium text-blue-400">Информация:</span> отклонение >10% (CTR/CR)</div>
+                      <div><span class="font-medium text-green-400">Чувствительность:</span> настройка порогов обнаружения</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <p class="text-gray-600 text-sm">Выявление отклонений в данных</p>
+            </div>
+          </div>
           <div class="flex items-center space-x-2">
-            <span class="text-sm text-gray-500">Чувствительность:</span>
-            <select class="text-sm border border-gray-300 rounded px-2 py-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500" (change)="onAnomalySensitivity($event)">
+            <span class="text-sm font-medium text-gray-700">Чувствительность:</span>
+            <select class="text-sm border border-gray-300 rounded-md px-3 py-1 focus:ring-2 focus:ring-red-500 focus:border-red-500" (change)="onAnomalySensitivity($event)">
               <option value="low">Низкая</option>
               <option value="medium" selected>Средняя</option>
               <option value="high">Высокая</option>
             </select>
           </div>
         </div>
-        
+
         @if (anomalies().length > 0) {
           <div class="space-y-4">
             @for (anomaly of anomalies(); track anomaly.id) {
@@ -483,19 +768,14 @@ import { GoogleAdsService, IndustryBenchmark } from './google-ads.service';
                     </div>
                     <p class="text-gray-600 text-sm mb-2">{{ anomaly.description }}</p>
                     <div class="text-xs text-gray-500">
-                      <span class="font-medium">Дата:</span> {{ anomaly.date }} | 
+                      <span class="font-medium">Дата:</span> {{ anomaly.date }} |
                       <span class="font-medium">Проект:</span> {{ anomaly.project }} |
-                      <span class="font-medium">Изменение:</span> 
+                      <span class="font-medium">Изменение:</span>
                       <span [class]="anomaly.change > 0 ? 'text-green-600' : 'text-red-600'">
                         {{ anomaly.change > 0 ? '+' : '' }}{{ anomaly.change.toFixed(1) }}%
                       </span>
                     </div>
                   </div>
-                  <button class="ml-4 text-gray-400 hover:text-gray-600" (click)="dismissAnomaly(anomaly.id)">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                  </button>
                 </div>
               </div>
             }
@@ -533,22 +813,51 @@ import { GoogleAdsService, IndustryBenchmark } from './google-ads.service';
           </div>
         }
       </div>
+      }
 
       <!-- Секция автоматических рекомендаций -->
-      <div class="p-6 rounded-lg bg-white shadow-lg border border-gray-100 mb-8">
+      @if (activeTab() === 'anomalies') {
+      <div class="bg-white border border-gray-200 rounded-lg p-6 mb-6">
         <div class="flex items-center justify-between mb-6">
-          <h3 class="text-xl font-semibold text-gray-800">💡 Автоматические рекомендации</h3>
-          <div class="flex items-center space-x-2">
-            <span class="text-sm text-gray-500">Приоритет:</span>
-            <select class="text-sm border border-gray-300 rounded px-2 py-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500" (change)="onRecommendationPriority($event)">
-              <option value="all">Все</option>
-              <option value="high" selected>Высокий</option>
-              <option value="medium">Средний</option>
-              <option value="low">Низкий</option>
-            </select>
+          <div class="flex items-center space-x-4">
+            <div class="p-3 bg-blue-600 rounded-lg">
+              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+              </svg>
+            </div>
+            <div>
+              <div class="flex items-center space-x-2">
+                <h3 class="text-xl font-semibold text-gray-900">💡 Автоматические рекомендации</h3>
+                <div class="group relative">
+                  <svg class="w-4 h-4 text-gray-400 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                  <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity z-10 w-80 min-w-64 break-words pointer-events-none">
+                    <div class="font-semibold mb-1">Автоматические рекомендации</div>
+                    <div class="text-xs mb-2">Умные предложения по улучшению показателей на основе анализа данных</div>
+                    <div class="text-xs">
+                      <div><span class="font-medium text-red-400">Высокий приоритет:</span> критические проблемы требующие немедленного внимания</div>
+                      <div><span class="font-medium text-orange-400">Средний приоритет:</span> важные улучшения для оптимизации</div>
+                      <div><span class="font-medium text-blue-400">Низкий приоритет:</span> дополнительные возможности для роста</div>
+                      <div><span class="font-medium text-green-400">Фильтр:</span> настройка отображения по приоритету</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <p class="text-gray-600 text-sm">Умные предложения по оптимизации</p>
+            </div>
           </div>
-        </div>
-        
+            <div class="flex items-center space-x-3">
+              <span class="text-sm font-semibold text-slate-700">Приоритет:</span>
+              <select class="text-sm border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" (change)="onRecommendationPriority($event)">
+                <option value="all">Все</option>
+                <option value="high" selected>Высокий</option>
+                <option value="medium">Средний</option>
+                <option value="low">Низкий</option>
+              </select>
+            </div>
+          </div>
+
         @if (recommendations().length > 0) {
           <div class="space-y-4">
             @for (recommendation of recommendations(); track recommendation.id) {
@@ -563,24 +872,19 @@ import { GoogleAdsService, IndustryBenchmark } from './google-ads.service';
                       </span>
                     </div>
                     <p class="text-gray-600 text-sm mb-3">{{ recommendation.description }}</p>
-                    
+
                     @if (recommendation.impact) {
                       <div class="text-xs text-gray-500 mb-2">
                         <span class="font-medium">Ожидаемый эффект:</span> {{ recommendation.impact }}
                       </div>
                     }
-                    
+
                     @if (recommendation.action) {
                       <div class="text-xs text-gray-500">
                         <span class="font-medium">Рекомендуемое действие:</span> {{ recommendation.action }}
                       </div>
                     }
                   </div>
-                  <button class="ml-4 text-gray-400 hover:text-gray-600" (click)="dismissRecommendation(recommendation.id)">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                  </button>
                 </div>
               </div>
             }
@@ -618,216 +922,149 @@ import { GoogleAdsService, IndustryBenchmark } from './google-ads.service';
           </div>
         }
       </div>
+      }
 
-      <!-- Секция бенчмаркинга -->
-      <div class="p-6 rounded-lg bg-white shadow-lg border border-gray-100 mb-8">
-        <div class="flex items-center justify-between mb-6">
-          <h3 class="text-xl font-semibold text-gray-800">📊 Бенчмаркинг</h3>
-          <div class="flex items-center space-x-4">
-            <!-- Статус API -->
-            <div class="flex items-center space-x-2">
-              <span class="text-sm text-gray-500">API:</span>
-              @if (apiStatus() === 'loading') {
-                <div class="flex items-center space-x-1">
-                  <div class="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
-                  <span class="text-xs text-yellow-600">Завантаження...</span>
-                </div>
-              } @else if (apiStatus() === 'connected') {
-                <div class="flex items-center space-x-1">
-                  <div class="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span class="text-xs text-green-600">Підключено</span>
-                </div>
-              } @else {
-                <div class="flex items-center space-x-1">
-                  <div class="w-2 h-2 bg-red-500 rounded-full"></div>
-                  <span class="text-xs text-red-600">Помилка</span>
-                </div>
-              }
-            </div>
-            
-            <!-- Джерело даних -->
-            @if (apiBenchmarks()) {
-              <div class="text-xs text-gray-500">
-                Джерело: {{ apiBenchmarks()!.budget.source }}
-              </div>
-            }
-            
-            <!-- Вибір галузі -->
-            <div class="flex items-center space-x-2">
-              <span class="text-sm text-gray-500">Отрасль:</span>
-              <select class="text-sm border border-gray-300 rounded px-2 py-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500" (change)="onBenchmarkIndustry($event)">
-                <option value="automotive" selected>Автомобильная</option>
-                <option value="machinery">Машиностроение</option>
-                <option value="agriculture">Сельское хозяйство</option>
-                <option value="general">Общие показатели</option>
-              </select>
-            </div>
-          </div>
-        </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <!-- Бюджет -->
-          <div class="p-4 border rounded-lg bg-gradient-to-br from-blue-50 to-blue-100">
-            <div class="flex items-center justify-between mb-3">
-              <h4 class="font-semibold text-gray-800">Бюджет</h4>
-              <span class="text-sm px-2 py-1 rounded-full" [class]="getBenchmarkClass(benchmarkData().budget.performance)">
-                {{ getBenchmarkStatus(benchmarkData().budget.performance) }}
-              </span>
-            </div>
-            <div class="space-y-2">
-              <div class="flex justify-between text-sm">
-                <span class="text-gray-600">Ваш показатель:</span>
-                <span class="font-medium">{{ benchmarkData().budget.current | currency:'USD':'symbol':'1.0-0' }}</span>
-              </div>
-              <div class="flex justify-between text-sm">
-                <span class="text-gray-600">Средний по отрасли:</span>
-                <span class="font-medium">{{ benchmarkData().budget.average | currency:'USD':'symbol':'1.0-0' }}</span>
-              </div>
-              <div class="flex justify-between text-sm">
-                <span class="text-gray-600">Лучший результат:</span>
-                <span class="font-medium">{{ benchmarkData().budget.best | currency:'USD':'symbol':'1.0-0' }}</span>
-              </div>
-              <div class="mt-3 pt-2 border-t border-gray-200">
-                <div class="flex justify-between text-sm">
-                  <span class="text-gray-600">Позиция:</span>
-                  <span class="font-medium" [class]="getBenchmarkClass(benchmarkData().budget.performance)">
-                    {{ benchmarkData().budget.performance }}%
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
 
-          <!-- Конверсии -->
-          <div class="p-4 border rounded-lg bg-gradient-to-br from-green-50 to-green-100">
-            <div class="flex items-center justify-between mb-3">
-              <h4 class="font-semibold text-gray-800">Конверсии</h4>
-              <span class="text-sm px-2 py-1 rounded-full" [class]="getBenchmarkClass(benchmarkData().conversions.performance)">
-                {{ getBenchmarkStatus(benchmarkData().conversions.performance) }}
-              </span>
-            </div>
-            <div class="space-y-2">
-              <div class="flex justify-between text-sm">
-                <span class="text-gray-600">Ваш показатель:</span>
-                <span class="font-medium">{{ benchmarkData().conversions.current }}</span>
-              </div>
-              <div class="flex justify-between text-sm">
-                <span class="text-gray-600">Средний по отрасли:</span>
-                <span class="font-medium">{{ benchmarkData().conversions.average }}</span>
-              </div>
-              <div class="flex justify-between text-sm">
-                <span class="text-gray-600">Лучший результат:</span>
-                <span class="font-medium">{{ benchmarkData().conversions.best }}</span>
-              </div>
-              <div class="mt-3 pt-2 border-t border-gray-200">
-                <div class="flex justify-between text-sm">
-                  <span class="text-gray-600">Позиция:</span>
-                  <span class="font-medium" [class]="getBenchmarkClass(benchmarkData().conversions.performance)">
-                    {{ benchmarkData().conversions.performance }}%
-                  </span>
-                </div>
-              </div>
-            </div>
+      @if (activeTab() === 'detailed') {
+      <div class="bg-white border border-gray-200 rounded-lg p-6">
+        <div class="flex items-center space-x-3 mb-6">
+          <div class="p-2 bg-gray-600 rounded-lg">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
           </div>
-
-          <!-- CTR -->
-          <div class="p-4 border rounded-lg bg-gradient-to-br from-purple-50 to-purple-100">
-            <div class="flex items-center justify-between mb-3">
-              <h4 class="font-semibold text-gray-800">CTR</h4>
-              <span class="text-sm px-2 py-1 rounded-full" [class]="getBenchmarkClass(benchmarkData().ctr.performance)">
-                {{ getBenchmarkStatus(benchmarkData().ctr.performance) }}
-              </span>
-            </div>
-            <div class="space-y-2">
-              <div class="flex justify-between text-sm">
-                <span class="text-gray-600">Ваш показатель:</span>
-                <span class="font-medium">{{ benchmarkData().ctr.current | percent:'1.2-2' }}</span>
-              </div>
-              <div class="flex justify-between text-sm">
-                <span class="text-gray-600">Средний по отрасли:</span>
-                <span class="font-medium">{{ benchmarkData().ctr.average | percent:'1.2-2' }}</span>
-              </div>
-              <div class="flex justify-between text-sm">
-                <span class="text-gray-600">Лучший результат:</span>
-                <span class="font-medium">{{ benchmarkData().ctr.best | percent:'1.2-2' }}</span>
-              </div>
-              <div class="mt-3 pt-2 border-t border-gray-200">
-                <div class="flex justify-between text-sm">
-                  <span class="text-gray-600">Позиция:</span>
-                  <span class="font-medium" [class]="getBenchmarkClass(benchmarkData().ctr.performance)">
-                    {{ benchmarkData().ctr.performance }}%
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- CR -->
-          <div class="p-4 border rounded-lg bg-gradient-to-br from-orange-50 to-orange-100">
-            <div class="flex items-center justify-between mb-3">
-              <h4 class="font-semibold text-gray-800">CR</h4>
-              <span class="text-sm px-2 py-1 rounded-full" [class]="getBenchmarkClass(benchmarkData().cr.performance)">
-                {{ getBenchmarkStatus(benchmarkData().cr.performance) }}
-              </span>
-            </div>
-            <div class="space-y-2">
-              <div class="flex justify-between text-sm">
-                <span class="text-gray-600">Ваш показатель:</span>
-                <span class="font-medium">{{ benchmarkData().cr.current | percent:'1.2-2' }}</span>
-              </div>
-              <div class="flex justify-between text-sm">
-                <span class="text-gray-600">Средний по отрасли:</span>
-                <span class="font-medium">{{ benchmarkData().cr.average | percent:'1.2-2' }}</span>
-              </div>
-              <div class="flex justify-between text-sm">
-                <span class="text-gray-600">Лучший результат:</span>
-                <span class="font-medium">{{ benchmarkData().cr.best | percent:'1.2-2' }}</span>
-              </div>
-              <div class="mt-3 pt-2 border-t border-gray-200">
-                <div class="flex justify-between text-sm">
-                  <span class="text-gray-600">Позиция:</span>
-                  <span class="font-medium" [class]="getBenchmarkClass(benchmarkData().cr.performance)">
-                    {{ benchmarkData().cr.performance }}%
-                  </span>
-                </div>
-              </div>
-            </div>
+          <div>
+            <h3 class="text-xl font-semibold text-gray-900">Детальная аналитика</h3>
+            <p class="text-gray-600 text-sm">Подробный анализ всех показателей</p>
           </div>
         </div>
 
-        <!-- График бенчмаркинга -->
-        <div class="mt-8">
-          <h4 class="text-lg font-semibold text-gray-800 mb-4">Сравнение с отраслевыми стандартами</h4>
-          <div class="h-64">
-            <canvas baseChart [data]="benchmarkChartData()" [options]="benchmarkChartOptions" [type]="'radar'"></canvas>
-          </div>
-        </div>
-
-        <!-- Рекомендации по бенчмаркингу -->
-        <div class="mt-6 pt-4 border-t border-gray-200">
-          <h4 class="text-md font-semibold text-gray-700 mb-3">Рекомендации по улучшению позиции</h4>
-          <div class="space-y-3">
-            @for (insight of benchmarkInsights(); track insight.id) {
-              <div class="p-3 bg-gray-50 rounded-lg">
-                <div class="flex items-start">
-                  <span class="text-lg mr-3">{{ getBenchmarkInsightIcon(insight.type) }}</span>
-                  <div class="flex-1">
-                    <h5 class="font-medium text-gray-800 mb-1">{{ insight.title }}</h5>
-                    <p class="text-sm text-gray-600">{{ insight.description }}</p>
-                    @if (insight.potential) {
-                      <div class="text-xs text-gray-500 mt-2">
-                        <span class="font-medium">Потенциал улучшения:</span> {{ insight.potential }}
-                      </div>
-                    }
-                  </div>
+        <!-- Глобальные тотали -->
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+                      <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div class="flex items-center justify-between mb-2">
+                <div class="p-1.5 bg-blue-600 rounded-lg">
+                  <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                  </svg>
                 </div>
               </div>
-            }
+              <div class="text-xs font-medium text-blue-600 mb-1 whitespace-nowrap">Бюджет текущий период</div>
+              <div class="text-base font-semibold text-gray-900">€{{ totals().budget.toLocaleString('uk-UA') }}</div>
+            </div>
+        <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div class="flex items-center justify-between mb-3">
+            <div class="p-1.5 bg-green-600 rounded-lg">
+              <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+              </svg>
+            </div>
+          </div>
+          <div class="text-xs font-medium text-green-600 mb-1 whitespace-nowrap">Конверсии текущий период</div>
+          <div class="text-base font-semibold text-gray-900">{{ totals().conversions.toLocaleString('uk-UA') }}</div>
+        </div>
+        <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div class="flex items-center justify-between mb-3">
+            <div class="p-1.5 bg-red-600 rounded-lg">
+              <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+              </svg>
+            </div>
+          </div>
+          <div class="text-xs font-medium text-red-600 mb-1 whitespace-nowrap">send_new_message</div>
+          <div class="text-base font-semibold text-gray-900">{{ totals().sendNewMessage.toLocaleString('uk-UA') }}</div>
+        </div>
+        <div class="bg-orange-50 border border-orange-200 rounded-lg p-4">
+          <div class="flex items-center justify-between mb-3">
+            <div class="p-1.5 bg-orange-600 rounded-lg">
+              <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+              </svg>
+            </div>
+          </div>
+          <div class="text-xs font-medium text-orange-600 mb-1 whitespace-nowrap">sales_full_tel</div>
+          <div class="text-base font-semibold text-gray-900">{{ totals().salesFullTel.toLocaleString('uk-UA') }}</div>
+        </div>
+        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <div class="flex items-center justify-between mb-3">
+            <div class="p-1.5 bg-yellow-600 rounded-lg">
+              <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+              </svg>
+            </div>
+          </div>
+          <div class="text-xs font-medium text-yellow-600 mb-1 whitespace-nowrap">button_messenger</div>
+          <div class="text-base font-semibold text-gray-900">{{ totals().buttonMessenger.toLocaleString('uk-UA') }}</div>
+        </div>
+        <div class=" bg-cyan-50 border border-cyan-200 rounded-lg p-4">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <div class="p-1.5 bg-blue-600 rounded-lg">
+                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                </svg>
+              </div>
+            </div>
+            <div class="text-xs font-medium text-cyan-600 mb-1 whitespace-nowrap">Показы текущий период</div>
+            <div class="text-base font-semibold text-gray-900">{{ totals().impressions.toLocaleString('uk-UA') }}</div>
+          </div>
+        </div>
+        <div class=" bg-purple-50 border border-purple-200 rounded-lg p-4">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <div class="p-1.5 bg-blue-600 rounded-lg">
+                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path>
+                </svg>
+              </div>
+            </div>
+            <div class="text-xs font-medium text-purple-600 mb-1 whitespace-nowrap">Клики текущий период</div>
+            <div class="text-base font-semibold text-gray-900">{{ totals().clicks.toLocaleString('uk-UA') }}</div>
+          </div>
+        </div>
+        <div class=" bg-pink-50 border border-pink-200 rounded-lg p-4">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <div class="p-1.5 bg-blue-600 rounded-lg">
+                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                </svg>
+              </div>
+            </div>
+            <div class="text-xs font-medium text-pink-600 mb-1 whitespace-nowrap">СРМ текущий период</div>
+            <div class="text-base font-semibold text-gray-900">€{{ totals().cpmEur.toFixed(2) }}</div>
+          </div>
+        </div>
+        <div class=" bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <div class="p-1.5 bg-blue-600 rounded-lg">
+                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                </svg>
+              </div>
+            </div>
+            <div class="text-xs font-medium text-indigo-600 mb-1 whitespace-nowrap">CTR текущий период</div>
+            <div class="text-base font-semibold text-gray-900">{{ (totals().ctrAvg * 100).toFixed(2) }}%</div>
+          </div>
+        </div>
+        <div class=" bg-slate-50 border border-slate-200 rounded-lg p-4">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <div class="p-1.5 bg-blue-600 rounded-lg">
+                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+              </div>
+            </div>
+            <div class="text-xs font-medium text-slate-600 mb-1 whitespace-nowrap">CR текущий период</div>
+            <div class="text-base font-semibold text-gray-900">{{ (totals().crAvg * 100).toFixed(2) }}%</div>
           </div>
         </div>
       </div>
 
-      <div class="p-6 rounded-lg bg-white shadow-lg border border-gray-100">
+      <div class="p-6 rounded-lg bg-white border border-gray-200 mb-6">
         <div class="flex items-center justify-between mb-6">
           <div class="flex items-center space-x-4">
             <h3 class="text-xl font-semibold text-gray-800">Динамика показателей</h3>
@@ -838,7 +1075,7 @@ import { GoogleAdsService, IndustryBenchmark } from './google-ads.service';
             </div>
           </div>
           <button
-            class="px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 shadow-md flex items-center"
+            class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors flex items-center"
             (click)="exportChart()"
           >
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -848,11 +1085,11 @@ import { GoogleAdsService, IndustryBenchmark } from './google-ads.service';
           </button>
         </div>
         <div class="h-96">
-                      <canvas baseChart [type]="'line'" [data]="chartData()" [options]="chartOptions"></canvas>
+          <apx-chart [series]="chartSeries()" [chart]="chartConfig" [xaxis]="chartXAxis()" [yaxis]="chartYAxis" [colors]="chartColors" [stroke]="chartStroke" [legend]="chartLegend" [tooltip]="chartTooltip"></apx-chart>
         </div>
       </div>
 
-            <div class="p-6 rounded-lg bg-white shadow-lg border border-gray-100">
+            <div class="p-6 rounded-lg bg-white border border-gray-200">
         <div class="flex items-center justify-between mb-6">
           <h3 class="text-xl font-semibold text-gray-800">Кампании за период</h3>
           <div class="text-sm text-gray-500">
@@ -951,29 +1188,16 @@ import { GoogleAdsService, IndustryBenchmark } from './google-ads.service';
           </table>
         </div>
       </div>
-    </div>
-    } @else {
-      <div class="flex items-center justify-center min-h-96">
-        <div class="text-center p-8 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 shadow-lg">
-          <div class="text-8xl mb-6">📊</div>
-          <h3 class="text-2xl font-bold text-gray-800 mb-4">Нет данных для анализа</h3>
-          <p class="text-gray-600 text-lg mb-6">Загрузите XLSX файл на вкладке "Загрузка" чтобы увидеть аналитику</p>
-          <div class="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
-            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
-            Перейдите на вкладку "Загрузка"
-          </div>
-        </div>
       </div>
-    }
+      }
 
+    <!-- Модальные окна вынесены за основной контейнер -->
     <!-- Модальное окно управления данными -->
     @if (showDeleteModal()) {
-      <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+      <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" (click)="showDeleteModal.set(false)">
+        <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4" (click)="$event.stopPropagation()">
           <h3 class="text-lg font-semibold text-gray-800 mb-4">Управление данными</h3>
-          
+
           <div class="space-y-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">Выберите дату для удаления</label>
@@ -984,20 +1208,34 @@ import { GoogleAdsService, IndustryBenchmark } from './google-ads.service';
                 }
               </select>
             </div>
-            
+
             <div class="flex space-x-3">
-              <button 
+              <button
                 class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 [disabled]="!selectedDeleteDate()"
                 (click)="deleteSelectedDate()"
               >
                 Удалить
               </button>
-              <button 
+              <button
                 class="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
                 (click)="showDeleteModal.set(false)"
               >
                 Отмена
+              </button>
+            </div>
+
+            <!-- Розділювач -->
+            <div class="border-t border-gray-200 my-4"></div>
+
+            <!-- Кнопка очищення всіх даних -->
+            <div class="text-center">
+              <p class="text-sm text-gray-600 mb-3">Для удаления всех данных из базы</p>
+              <button
+                class="w-full px-4 py-2 bg-red-800 text-white rounded-lg hover:bg-red-900 transition-colors"
+                (click)="clearAllData()"
+              >
+                Очистить все данные
               </button>
             </div>
           </div>
@@ -1005,111 +1243,6 @@ import { GoogleAdsService, IndustryBenchmark } from './google-ads.service';
       </div>
     }
 
-    <!-- Модальное окно с деталями точки графика -->
-    @if (showDetailsModal()) {
-      <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-semibold text-gray-800">Детали за {{ selectedPointData()?.date }}</h3>
-            <button class="text-gray-400 hover:text-gray-600" (click)="showDetailsModal.set(false)">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-              </svg>
-            </button>
-          </div>
-          
-          @if (selectedPointData()) {
-            <div class="space-y-6">
-              <!-- Общая информация -->
-              <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div class="p-4 bg-blue-50 rounded-lg">
-                  <div class="text-sm font-medium text-blue-600">Метрика</div>
-                  <div class="text-lg font-bold text-blue-800">{{ selectedPointData()?.metric }}</div>
-                </div>
-                <div class="p-4 bg-green-50 rounded-lg">
-                  <div class="text-sm font-medium text-green-600">Значение</div>
-                  <div class="text-lg font-bold text-green-800">
-                    @if (selectedPointData()?.metric === 'Бюджет' || selectedPointData()?.metric === 'СРМ') {
-                      €{{ selectedPointData()?.value?.toLocaleString() }}
-                    } @else if (selectedPointData()?.metric === 'CTR' || selectedPointData()?.metric === 'CR') {
-                      {{ (selectedPointData()?.value * 100)?.toFixed(2) }}%
-                    } @else {
-                      {{ selectedPointData()?.value?.toLocaleString() }}
-                    }
-                  </div>
-                </div>
-                <div class="p-4 bg-purple-50 rounded-lg">
-                  <div class="text-sm font-medium text-purple-600">Проект</div>
-                  <div class="text-lg font-bold text-purple-800">{{ selectedProject() }}</div>
-                </div>
-                <div class="p-4 bg-orange-50 rounded-lg">
-                  <div class="text-sm font-medium text-orange-600">Кампаний</div>
-                  <div class="text-lg font-bold text-orange-800">{{ selectedPointData()?.campaigns?.length || 0 }}</div>
-                </div>
-              </div>
-
-              <!-- Таблица кампаний -->
-              <div>
-                <h4 class="text-md font-semibold text-gray-700 mb-3">Кампании</h4>
-                <div class="overflow-x-auto">
-                  <table class="min-w-full bg-white border border-gray-200 rounded-lg">
-                    <thead class="bg-gray-50">
-                      <tr>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Название</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Бюджет</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Конверсии</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CTR</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CR</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Подгруппы</th>
-                      </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                      @for (campaign of selectedPointData()?.campaigns; track campaign.name) {
-                        <tr class="hover:bg-gray-50">
-                          <td class="px-4 py-3 font-medium text-gray-900">{{ campaign.name }}</td>
-                          <td class="px-4 py-3 text-gray-900">€{{ campaign.budgetEur?.toLocaleString() }}</td>
-                          <td class="px-4 py-3 text-gray-900">{{ campaign.conversions?.toLocaleString() }}</td>
-                          <td class="px-4 py-3 text-gray-900">{{ (campaign.ctrPercent * 100)?.toFixed(2) }}%</td>
-                          <td class="px-4 py-3 text-gray-900">{{ (campaign.crPercent * 100)?.toFixed(2) }}%</td>
-                          <td class="px-4 py-3 text-gray-900">{{ campaign.subgroups?.length || 0 }}</td>
-                        </tr>
-                      }
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              <!-- Общие метрики -->
-              <div>
-                <h4 class="text-md font-semibold text-gray-700 mb-3">Общие метрики</h4>
-                <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-                  <div class="p-3 bg-gray-50 rounded-lg">
-                    <div class="text-sm font-medium text-gray-600">Бюджет</div>
-                    <div class="text-lg font-bold text-gray-800">€{{ selectedPointData()?.total?.budgetEur?.toLocaleString() }}</div>
-                  </div>
-                  <div class="p-3 bg-gray-50 rounded-lg">
-                    <div class="text-sm font-medium text-gray-600">Конверсии</div>
-                    <div class="text-lg font-bold text-gray-800">{{ selectedPointData()?.total?.conversions?.toLocaleString() }}</div>
-                  </div>
-                  <div class="p-3 bg-gray-50 rounded-lg">
-                    <div class="text-sm font-medium text-gray-600">Показы</div>
-                    <div class="text-lg font-bold text-gray-800">{{ selectedPointData()?.total?.impressions?.toLocaleString() }}</div>
-                  </div>
-                  <div class="p-3 bg-gray-50 rounded-lg">
-                    <div class="text-sm font-medium text-gray-600">Клики</div>
-                    <div class="text-lg font-bold text-gray-800">{{ selectedPointData()?.total?.clicks?.toLocaleString() }}</div>
-                  </div>
-                  <div class="p-3 bg-gray-50 rounded-lg">
-                    <div class="text-sm font-medium text-gray-600">СРМ</div>
-                    <div class="text-lg font-bold text-gray-800">€{{ selectedPointData()?.total?.cpmEur?.toFixed(2) }}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          }
-        </div>
-      </div>
-    }
 
     <!-- Модальное окно настройки KPI -->
     @if (showKPISettings()) {
@@ -1123,7 +1256,7 @@ import { GoogleAdsService, IndustryBenchmark } from './google-ads.service';
               </svg>
             </button>
           </div>
-          
+
           <div class="space-y-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">Проект</label>
@@ -1133,32 +1266,32 @@ import { GoogleAdsService, IndustryBenchmark } from './google-ads.service';
                 <option value="Agroline">Agroline</option>
               </select>
             </div>
-            
+
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">Бюджет (€)</label>
-              <input type="number" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+              <input type="number" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                      [value]="kpiSettingsTargets().budget" (change)="onKPIBudgetChange($event)" />
             </div>
-            
+
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">Конверсии</label>
-              <input type="number" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+              <input type="number" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                      [value]="kpiSettingsTargets().conversions" (change)="onKPIConversionsChange($event)" />
             </div>
-            
+
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">CTR (%)</label>
-              <input type="number" step="0.01" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+              <input type="number" step="0.01" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                      [value]="kpiSettingsTargets().ctr * 100" (change)="onKPICTRChange($event)" />
             </div>
-            
+
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">CR (%)</label>
-              <input type="number" step="0.01" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+              <input type="number" step="0.01" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                      [value]="kpiSettingsTargets().cr * 100" (change)="onKPICRChange($event)" />
             </div>
           </div>
-          
+
           <div class="flex space-x-3 mt-6">
             <button class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors" (click)="saveKPISettings()">
               Сохранить
@@ -1170,16 +1303,54 @@ import { GoogleAdsService, IndustryBenchmark } from './google-ads.service';
         </div>
       </div>
     }
+      </div>
+    } @else {
+      <div class="max-w-7xl mx-auto p-6">
+        <div class="bg-white border border-gray-200 rounded-lg p-8">
+          <div class="text-center">
+            <!-- Іконка -->
+            <div class="inline-flex items-center justify-center w-20 h-20 bg-blue-100 rounded-full mb-6">
+              <svg class="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+              </svg>
+            </div>
+            
+            <!-- Заголовок -->
+            <h2 class="text-2xl font-semibold text-gray-900 mb-3">Нет данных для анализа</h2>
+            
+            <!-- Опис -->
+            <p class="text-gray-600 text-lg mb-8 max-w-md mx-auto">
+              Загрузите XLSX файл на блоке "Импорт ежедневного отчета", чтобы увидеть детальную аналитику ваших кампаний
+            </p>
+            
+            <!-- Інформація про підтримувані формати -->
+            <div class="flex items-center justify-center text-sm text-gray-500 mb-8">
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              Поддерживаются файлы .xlsx и .xls
+            </div>
+            
+          </div>
+        </div>
+      </div>
+    }
   `,
   styles: [
     `:host{display:block}
      table{width:100%}
+     .scrollbar-hide {
+       -ms-overflow-style: none;
+       scrollbar-width: none;
+     }
+     .scrollbar-hide::-webkit-scrollbar {
+       display: none;
+     }
     `,
   ],
 })
 export class DashboardComponent implements OnInit {
   private store = inject(DataStoreService);
-  private googleAdsService = inject(GoogleAdsService);
   protected Math = Math;
   protected from = signal<string>('');
   protected to = signal<string>('');
@@ -1190,8 +1361,6 @@ export class DashboardComponent implements OnInit {
   protected sortDirection = signal<'asc' | 'desc'>('asc');
   protected showDeleteModal = signal(false);
   protected selectedDeleteDate = signal('');
-  protected showDetailsModal = signal(false);
-  protected selectedPointData = signal<any>(null);
   protected trendPeriod = signal<number>(30);
   protected comparisonPeriod = signal<'previous_week' | 'previous_month' | 'same_period_last_year'>('previous_month');
   protected showKPISettings = signal<boolean>(false);
@@ -1204,9 +1373,7 @@ export class DashboardComponent implements OnInit {
   });
   protected anomalySensitivity = signal<'low' | 'medium' | 'high'>('medium');
   protected recommendationPriority = signal<'all' | 'high' | 'medium' | 'low'>('high');
-  protected benchmarkIndustry = signal<'automotive' | 'machinery' | 'agriculture' | 'general'>('automotive');
-  protected apiBenchmarks = signal<IndustryBenchmark | null>(null);
-  protected apiStatus = signal<'loading' | 'connected' | 'error'>('loading');
+  protected activeTab = signal<'overview' | 'kpi' | 'trends' | 'comparison' | 'anomalies' | 'detailed'>('detailed');
 
   protected availableDates = computed(() => {
     return this.store.dates();
@@ -1215,7 +1382,7 @@ export class DashboardComponent implements OnInit {
   protected trends = computed(() => {
     const dates = this.filteredDates();
     const period = this.trendPeriod();
-    
+
     if (dates.length < 2) {
       return {
         budget: { trend: 0, current: 0, forecast: 0 },
@@ -1226,19 +1393,21 @@ export class DashboardComponent implements OnInit {
     }
 
     // Берем последние N дней для анализа
-    const recentDates = dates.slice(-Math.min(period, dates.length));
+    const recentDates = dates.slice(-period);
     const project = this.selectedProject();
-    
+
     // Получаем данные для каждого дня
     const dailyData = recentDates.map(date => {
-      const reports = this.store.reports().filter(r => r.date === date && r.project === project);
+      // Убираем суффикс проекта из даты для поиска
+      const cleanDate = date.split('-').slice(0, 3).join('-');
+      const reports = this.store.reports().filter(r => r.date === cleanDate && r.project === project);
       const total = reports.reduce((sum, r) => ({
         budget: sum.budget + r.total.budgetEur,
         conversions: sum.conversions + r.total.conversions,
         clicks: sum.clicks + r.total.clicks,
         impressions: sum.impressions + r.total.impressions
       }), { budget: 0, conversions: 0, clicks: 0, impressions: 0 });
-      
+
       return {
         date,
         budget: total.budget,
@@ -1251,16 +1420,16 @@ export class DashboardComponent implements OnInit {
     // Рассчитываем тренды
     const calculateTrend = (values: number[]) => {
       if (values.length < 2) return 0;
-      
+
       const n = values.length;
       const sumX = (n * (n - 1)) / 2;
       const sumY = values.reduce((sum, val) => sum + val, 0);
       const sumXY = values.reduce((sum, val, i) => sum + val * i, 0);
       const sumX2 = values.reduce((sum, _, i) => sum + i * i, 0);
-      
+
       const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
       const avg = sumY / n;
-      
+
       return avg > 0 ? (slope / avg) * 100 : 0;
     };
 
@@ -1271,7 +1440,7 @@ export class DashboardComponent implements OnInit {
 
     // Текущие значения (последний день)
     const current = dailyData[dailyData.length - 1];
-    
+
     // Простой прогноз (линейная экстраполяция)
     const forecast = {
       budget: current.budget * (1 + budgetTrend / 100),
@@ -1280,18 +1449,20 @@ export class DashboardComponent implements OnInit {
       cr: current.cr * (1 + crTrend / 100)
     };
 
-    return {
+    const result = {
       budget: { trend: budgetTrend, current: current.budget, forecast: forecast.budget },
       conversions: { trend: conversionsTrend, current: current.conversions, forecast: forecast.conversions },
       ctr: { trend: ctrTrend, current: current.ctr, forecast: forecast.ctr },
       cr: { trend: crTrend, current: current.cr, forecast: forecast.cr }
     };
+    
+    return result;
   });
 
   protected comparison = computed(() => {
     const dates = this.filteredDates();
     const period = this.comparisonPeriod();
-    
+
     if (dates.length === 0) {
       return {
         budget: { current: 0, previous: 0, change: 0 },
@@ -1302,61 +1473,70 @@ export class DashboardComponent implements OnInit {
     }
 
     const project = this.selectedProject();
-    
+
     // Определяем периоды для сравнения
     let currentPeriodDates: string[];
     let previousPeriodDates: string[];
-    
-    if (period === 'previous_week') {
-      // Сравниваем с предыдущей неделей
-      const currentWeekStart = new Date(dates[0]);
-      const currentWeekEnd = new Date(dates[dates.length - 1]);
-      const previousWeekStart = new Date(currentWeekStart);
-      previousWeekStart.setDate(previousWeekStart.getDate() - 7);
-      const previousWeekEnd = new Date(currentWeekEnd);
-      previousWeekEnd.setDate(previousWeekEnd.getDate() - 7);
-      
-      currentPeriodDates = dates;
-      previousPeriodDates = this.store.dates().filter(date => {
-        const dateObj = new Date(date);
-        return dateObj >= previousWeekStart && dateObj <= previousWeekEnd;
-      });
-    } else if (period === 'previous_month') {
-      // Сравниваем с предыдущим месяцем
-      const currentMonthStart = new Date(dates[0]);
-      const currentMonthEnd = new Date(dates[dates.length - 1]);
-      const previousMonthStart = new Date(currentMonthStart);
-      previousMonthStart.setMonth(previousMonthStart.getMonth() - 1);
-      const previousMonthEnd = new Date(currentMonthEnd);
-      previousMonthEnd.setMonth(previousMonthEnd.getMonth() - 1);
-      
-      currentPeriodDates = dates;
-      previousPeriodDates = this.store.dates().filter(date => {
-        const dateObj = new Date(date);
-        return dateObj >= previousMonthStart && dateObj <= previousMonthEnd;
-      });
-    } else {
-      // Сравниваем с тем же периодом прошлого года
-      const currentYearStart = new Date(dates[0]);
-      const currentYearEnd = new Date(dates[dates.length - 1]);
-      const previousYearStart = new Date(currentYearStart);
-      previousYearStart.setFullYear(previousYearStart.getFullYear() - 1);
-      const previousYearEnd = new Date(currentYearEnd);
-      previousYearEnd.setFullYear(previousYearEnd.getFullYear() - 1);
-      
-      currentPeriodDates = dates;
-      previousPeriodDates = this.store.dates().filter(date => {
-        const dateObj = new Date(date);
-        return dateObj >= previousYearStart && dateObj <= previousYearEnd;
-      });
-    }
+
+          if (period === 'previous_week') {
+        // Сравниваем с предыдущей неделей
+        const cleanCurrentStart = dates[0].split('-').slice(0, 3).join('-');
+        const cleanCurrentEnd = dates[dates.length - 1].split('-').slice(0, 3).join('-');
+        const currentWeekStart = new Date(cleanCurrentStart);
+        const currentWeekEnd = new Date(cleanCurrentEnd);
+        const previousWeekStart = new Date(currentWeekStart);
+        previousWeekStart.setDate(previousWeekStart.getDate() - 7);
+        const previousWeekEnd = new Date(currentWeekEnd);
+        previousWeekEnd.setDate(previousWeekEnd.getDate() - 7);
+
+        currentPeriodDates = dates;
+        previousPeriodDates = this.store.dates().filter(date => {
+          const cleanDate = date.split('-').slice(0, 3).join('-');
+          const dateObj = new Date(cleanDate);
+          return dateObj >= previousWeekStart && dateObj <= previousWeekEnd;
+        });
+          } else if (period === 'previous_month') {
+        // Сравниваем с предыдущим месяцем
+        const cleanCurrentStart = dates[0].split('-').slice(0, 3).join('-');
+        const cleanCurrentEnd = dates[dates.length - 1].split('-').slice(0, 3).join('-');
+        const currentMonthStart = new Date(cleanCurrentStart);
+        const currentMonthEnd = new Date(cleanCurrentEnd);
+        const previousMonthStart = new Date(currentMonthStart);
+        previousMonthStart.setMonth(previousMonthStart.getMonth() - 1);
+        const previousMonthEnd = new Date(currentMonthEnd);
+        previousMonthEnd.setMonth(previousMonthEnd.getMonth() - 1);
+
+        currentPeriodDates = dates;
+        previousPeriodDates = this.store.dates().filter(date => {
+          const cleanDate = date.split('-').slice(0, 3).join('-');
+          const dateObj = new Date(cleanDate);
+          return dateObj >= previousMonthStart && dateObj <= previousMonthEnd;
+        });
+          } else {
+        // Сравниваем с тем же периодом прошлого года
+        const cleanCurrentStart = dates[0].split('-').slice(0, 3).join('-');
+        const cleanCurrentEnd = dates[dates.length - 1].split('-').slice(0, 3).join('-');
+        const currentYearStart = new Date(cleanCurrentStart);
+        const currentYearEnd = new Date(cleanCurrentEnd);
+        const previousYearStart = new Date(currentYearStart);
+        previousYearStart.setFullYear(previousYearStart.getFullYear() - 1);
+        const previousYearEnd = new Date(currentYearEnd);
+        previousYearEnd.setFullYear(previousYearEnd.getFullYear() - 1);
+
+        currentPeriodDates = dates;
+        previousPeriodDates = this.store.dates().filter(date => {
+          const cleanDate = date.split('-').slice(0, 3).join('-');
+          const dateObj = new Date(cleanDate);
+          return dateObj >= previousYearStart && dateObj <= previousYearEnd;
+        });
+      }
 
     // Рассчитываем метрики для текущего периода
     const currentMetrics = this.calculatePeriodMetrics(currentPeriodDates, project);
-    
+
     // Рассчитываем метрики для предыдущего периода
     const previousMetrics = this.calculatePeriodMetrics(previousPeriodDates, project);
-    
+
     // Рассчитываем изменения
     const calculateChange = (current: number, previous: number) => {
       if (previous === 0) return current > 0 ? 100 : 0;
@@ -1390,10 +1570,10 @@ export class DashboardComponent implements OnInit {
   protected kpiMetrics = computed(() => {
     const currentTotals = this.totals();
     const project = this.selectedProject();
-    
+
     // Получаем цели из localStorage или используем дефолтные
     const kpiTargets = this.getKPITargets(project);
-    
+
     const calculateAchievement = (current: number, target: number) => {
       if (target === 0) return 0;
       return (current / target) * 100;
@@ -1431,16 +1611,16 @@ export class DashboardComponent implements OnInit {
       metrics.ctr.achievement,
       metrics.cr.achievement
     ];
-    
+
     const achieved = achievements.filter(a => a >= 100).length;
     const averageProgress = achievements.reduce((sum, a) => sum + a, 0) / achievements.length;
-    
+
     let status: 'excellent' | 'good' | 'warning' | 'critical';
     if (averageProgress >= 100) status = 'excellent';
     else if (averageProgress >= 80) status = 'good';
     else if (averageProgress >= 60) status = 'warning';
     else status = 'critical';
-    
+
     return {
       achieved,
       total: achievements.length,
@@ -1453,9 +1633,9 @@ export class DashboardComponent implements OnInit {
     const dates = this.filteredDates();
     const project = this.selectedProject();
     const sensitivity = this.anomalySensitivity();
-    
+
     if (dates.length < 2) return [];
-    
+
     const anomalies: Array<{
       id: string;
       title: string;
@@ -1466,17 +1646,19 @@ export class DashboardComponent implements OnInit {
       change: number;
       severity: 'critical' | 'warning' | 'info';
     }> = [];
-    
+
     // Получаем данные для анализа
     const dailyData = dates.map(date => {
-      const reports = this.store.reports().filter(r => r.date === date && r.project === project);
+      // Убираем суффикс проекта из даты для поиска
+      const cleanDate = date.split('-').slice(0, 3).join('-');
+      const reports = this.store.reports().filter(r => r.date === cleanDate && r.project === project);
       const total = reports.reduce((sum, r) => ({
         budget: sum.budget + r.total.budgetEur,
         conversions: sum.conversions + r.total.conversions,
         clicks: sum.clicks + r.total.clicks,
         impressions: sum.impressions + r.total.impressions
       }), { budget: 0, conversions: 0, clicks: 0, impressions: 0 });
-      
+
       return {
         date,
         budget: total.budget,
@@ -1485,21 +1667,21 @@ export class DashboardComponent implements OnInit {
         cr: total.clicks > 0 ? total.conversions / total.clicks : 0
       };
     });
-    
+
     // Настраиваем пороги в зависимости от чувствительности
     const thresholds = {
       low: { budget: 50, conversions: 100, ctr: 20, cr: 50 },
       medium: { budget: 30, conversions: 50, ctr: 15, cr: 30 },
       high: { budget: 15, conversions: 25, ctr: 10, cr: 15 }
     };
-    
+
     const currentThresholds = thresholds[sensitivity];
-    
+
     // Анализируем каждую метрику
     for (let i = 1; i < dailyData.length; i++) {
       const current = dailyData[i];
       const previous = dailyData[i - 1];
-      
+
       // Бюджет
       if (previous.budget > 0) {
         const change = ((current.budget - previous.budget) / previous.budget) * 100;
@@ -1516,7 +1698,7 @@ export class DashboardComponent implements OnInit {
           });
         }
       }
-      
+
       // Конверсии
       if (previous.conversions > 0) {
         const change = ((current.conversions - previous.conversions) / previous.conversions) * 100;
@@ -1533,7 +1715,7 @@ export class DashboardComponent implements OnInit {
           });
         }
       }
-      
+
       // CTR
       if (previous.ctr > 0) {
         const change = ((current.ctr - previous.ctr) / previous.ctr) * 100;
@@ -1550,7 +1732,7 @@ export class DashboardComponent implements OnInit {
           });
         }
       }
-      
+
       // CR
       if (previous.cr > 0) {
         const change = ((current.cr - previous.cr) / previous.cr) * 100;
@@ -1568,10 +1750,8 @@ export class DashboardComponent implements OnInit {
         }
       }
     }
-    
-    // Фильтруем отклоненные аномалии
-    const dismissedAnomalies = this.getDismissedAnomalies();
-    return anomalies.filter(a => !dismissedAnomalies.includes(a.id));
+
+    return anomalies;
   });
 
   protected anomalyStats = computed(() => {
@@ -1579,7 +1759,7 @@ export class DashboardComponent implements OnInit {
     const critical = anomalies.filter(a => a.severity === 'critical').length;
     const warning = anomalies.filter(a => a.severity === 'warning').length;
     const info = anomalies.filter(a => a.severity === 'info').length;
-    
+
     return {
       total: anomalies.length,
       critical,
@@ -1594,7 +1774,7 @@ export class DashboardComponent implements OnInit {
     const comparison = this.comparison();
     const kpiMetrics = this.kpiMetrics();
     const priority = this.recommendationPriority();
-    
+
     const recommendations: Array<{
       id: string;
       title: string;
@@ -1603,7 +1783,7 @@ export class DashboardComponent implements OnInit {
       impact?: string;
       action?: string;
     }> = [];
-    
+
     // Анализируем бюджет
     if (kpiMetrics.budget.achievement < 80) {
       recommendations.push({
@@ -1615,7 +1795,7 @@ export class DashboardComponent implements OnInit {
         action: 'Рассмотрите увеличение бюджета на 20-30%'
       });
     }
-    
+
     if (trends.budget.trend < -10) {
       recommendations.push({
         id: 'budget-declining',
@@ -1626,7 +1806,7 @@ export class DashboardComponent implements OnInit {
         action: 'Проверьте настройки бюджета и оптимизируйте расходы'
       });
     }
-    
+
     // Анализируем конверсии
     if (kpiMetrics.conversions.achievement < 70) {
       recommendations.push({
@@ -1638,7 +1818,7 @@ export class DashboardComponent implements OnInit {
         action: 'Оптимизируйте целевые страницы и улучшите релевантность'
       });
     }
-    
+
     if (trends.conversions.trend < -5) {
       recommendations.push({
         id: 'conversions-declining',
@@ -1649,7 +1829,7 @@ export class DashboardComponent implements OnInit {
         action: 'Проверьте качество трафика и настройки рекламы'
       });
     }
-    
+
     // Анализируем CTR
     if (kpiMetrics.ctr.achievement < 60) {
       recommendations.push({
@@ -1661,7 +1841,7 @@ export class DashboardComponent implements OnInit {
         action: 'Обновите креативы и улучшите таргетинг'
       });
     }
-    
+
     if (trends.ctr.trend < -3) {
       recommendations.push({
         id: 'ctr-declining',
@@ -1672,7 +1852,7 @@ export class DashboardComponent implements OnInit {
         action: 'Обновите объявления и проверьте релевантность'
       });
     }
-    
+
     // Анализируем CR
     if (kpiMetrics.cr.achievement < 50) {
       recommendations.push({
@@ -1684,7 +1864,7 @@ export class DashboardComponent implements OnInit {
         action: 'Оптимизируйте воронку продаж и улучшите UX'
       });
     }
-    
+
     if (trends.cr.trend < -2) {
       recommendations.push({
         id: 'cr-declining',
@@ -1695,7 +1875,7 @@ export class DashboardComponent implements OnInit {
         action: 'Проверьте качество лидов и процесс конверсии'
       });
     }
-    
+
     // Сравнение с предыдущим периодом
     if (comparison.budget.change < -20) {
       recommendations.push({
@@ -1707,7 +1887,7 @@ export class DashboardComponent implements OnInit {
         action: 'Рассмотрите увеличение бюджета до предыдущего уровня'
       });
     }
-    
+
     if (comparison.conversions.change < -15) {
       recommendations.push({
         id: 'conversions-comparison',
@@ -1718,12 +1898,12 @@ export class DashboardComponent implements OnInit {
         action: 'Проведите аудит рекламных кампаний и оптимизируйте воронку'
       });
     }
-    
+
     // Фильтруем по приоритету
     if (priority !== 'all') {
       return recommendations.filter(r => r.priority === priority);
     }
-    
+
     return recommendations;
   });
 
@@ -1732,7 +1912,7 @@ export class DashboardComponent implements OnInit {
     const high = recommendations.filter(r => r.priority === 'high').length;
     const medium = recommendations.filter(r => r.priority === 'medium').length;
     const low = recommendations.filter(r => r.priority === 'low').length;
-    
+
     return {
       total: recommendations.length,
       high,
@@ -1742,328 +1922,188 @@ export class DashboardComponent implements OnInit {
   });
 
   ngOnInit() {
-    this.loadGoogleAdsBenchmarks();
-  }
 
-  private loadGoogleAdsBenchmarks() {
-    this.apiStatus.set('loading');
-    
-    this.googleAdsService.getIndustryBenchmarks(this.benchmarkIndustry()).subscribe({
-      next: (benchmarks) => {
-        this.apiBenchmarks.set(benchmarks);
-        this.apiStatus.set('connected');
-      },
-      error: (error) => {
-        console.error('Помилка завантаження бенчмарків:', error);
-        this.apiStatus.set('error');
+    // Добавляем обработчик клавиши Escape для закрытия модалок
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        if (this.showDeleteModal()) {
+          this.showDeleteModal.set(false);
+        }
       }
     });
   }
 
-    protected benchmarkData = computed(() => {
-    const currentTotals = this.totals();
-    const industry = this.benchmarkIndustry();
-    const apiData = this.apiBenchmarks();
-    
-    // Використовуємо дані з API, якщо доступні, інакше fallback
-    let benchmarks: any;
-    
-    if (apiData) {
-      benchmarks = {
-        [industry]: {
-          budget: { average: apiData.budget.average, best: apiData.budget.best },
-          conversions: { average: apiData.conversions.average, best: apiData.conversions.best },
-          ctr: { average: apiData.ctr.average, best: apiData.ctr.best },
-          cr: { average: apiData.cr.average, best: apiData.cr.best }
-        }
-      };
-    } else {
-      // Fallback дані
-      benchmarks = {
-        automotive: {
-          budget: { average: 15000, best: 25000 },
-          conversions: { average: 85, best: 150 },
-          ctr: { average: 0.045, best: 0.08 },
-          cr: { average: 0.025, best: 0.045 }
-        },
-        machinery: {
-          budget: { average: 12000, best: 20000 },
-          conversions: { average: 65, best: 120 },
-          ctr: { average: 0.035, best: 0.065 },
-          cr: { average: 0.020, best: 0.035 }
-        },
-        agriculture: {
-          budget: { average: 8000, best: 15000 },
-          conversions: { average: 45, best: 90 },
-          ctr: { average: 0.030, best: 0.055 },
-          cr: { average: 0.018, best: 0.030 }
-        },
-        general: {
-          budget: { average: 10000, best: 18000 },
-          conversions: { average: 60, best: 110 },
-          ctr: { average: 0.040, best: 0.070 },
-          cr: { average: 0.022, best: 0.040 }
-        }
-      };
-    }
-    
-    const industryBenchmarks = benchmarks[industry];
-    
-    // Рассчитываем производительность (процент от лучшего результата)
-    const calculatePerformance = (current: number, best: number) => {
-      return Math.min(100, Math.max(0, (current / best) * 100));
-    };
-    
-    return {
-      budget: {
-        current: currentTotals.budget,
-        average: industryBenchmarks.budget.average,
-        best: industryBenchmarks.budget.best,
-        performance: calculatePerformance(currentTotals.budget, industryBenchmarks.budget.best)
+
+
+
+
+  // ApexCharts конфігурації
+  protected chartConfig: any = {
+    type: 'line',
+    height: 350,
+    fontFamily: 'Inter, system-ui, sans-serif',
+    animations: {
+      enabled: true,
+      easing: 'linear',
+      speed: 800,
+      animateGradually: {
+        enabled: false
       },
-      conversions: {
-        current: currentTotals.conversions,
-        average: industryBenchmarks.conversions.average,
-        best: industryBenchmarks.conversions.best,
-        performance: calculatePerformance(currentTotals.conversions, industryBenchmarks.conversions.best)
-      },
-      ctr: {
-        current: currentTotals.ctrAvg,
-        average: industryBenchmarks.ctr.average,
-        best: industryBenchmarks.ctr.best,
-        performance: calculatePerformance(currentTotals.ctrAvg, industryBenchmarks.ctr.best)
-      },
-      cr: {
-        current: currentTotals.crAvg,
-        average: industryBenchmarks.cr.average,
-        best: industryBenchmarks.cr.best,
-        performance: calculatePerformance(currentTotals.crAvg, industryBenchmarks.cr.best)
+      dynamicAnimation: {
+        enabled: true,
+        speed: 350
       }
-    };
-  });
-
-  protected benchmarkChartData = computed<ChartConfiguration<'radar'>['data']>(() => {
-    const data = this.benchmarkData();
-    
-    return {
-      labels: ['Бюджет', 'Конверсии', 'CTR', 'CR'],
-      datasets: [
-        {
-          label: 'Ваши показатели',
-          data: [
-            data.budget.performance,
-            data.conversions.performance,
-            data.ctr.performance,
-            data.cr.performance
-          ],
-          backgroundColor: 'rgba(59, 130, 246, 0.2)',
-          borderColor: 'rgba(59, 130, 246, 1)',
-          borderWidth: 2,
-          pointBackgroundColor: 'rgba(59, 130, 246, 1)',
-          pointBorderColor: '#fff',
-          pointHoverBackgroundColor: '#fff',
-          pointHoverBorderColor: 'rgba(59, 130, 246, 1)'
-        },
-        {
-          label: 'Средние по отрасли',
-          data: [
-            (data.budget.average / data.budget.best) * 100,
-            (data.conversions.average / data.conversions.best) * 100,
-            (data.ctr.average / data.ctr.best) * 100,
-            (data.cr.average / data.cr.best) * 100
-          ],
-          backgroundColor: 'rgba(34, 197, 94, 0.2)',
-          borderColor: 'rgba(34, 197, 94, 1)',
-          borderWidth: 2,
-          pointBackgroundColor: 'rgba(34, 197, 94, 1)',
-          pointBorderColor: '#fff',
-          pointHoverBackgroundColor: '#fff',
-          pointHoverBorderColor: 'rgba(34, 197, 94, 1)'
-        }
-      ]
-    };
-  });
-
-  protected benchmarkChartOptions: ChartConfiguration<'radar'>['options'] = {
-    responsive: true,
-    maintainAspectRatio: false,
-    scales: {
-      r: {
-        beginAtZero: true,
-        max: 100,
-        ticks: {
-          stepSize: 20
+    },
+    toolbar: {
+      show: true,
+      tools: {
+        download: true,
+        selection: false,
+        zoom: false,
+        zoomin: false,
+        zoomout: false,
+        pan: false,
+        reset: false
+      }
+    },
+    events: {
+      mounted: (chartContext: any, config: any) => {
+        // Виправляємо проблему з passive event listeners
+        const chart = chartContext.w.globals.dom.baseEl;
+        if (chart) {
+          chart.style.touchAction = 'none';
         }
       }
     },
-    plugins: {
-      legend: {
-        position: 'top'
+    zoom: {
+      enabled: false
+    },
+    pan: {
+      enabled: false
+    },
+    selection: {
+      enabled: false
+    },
+    brush: {
+      enabled: false
+    },
+    dataLabels: {
+      enabled: false
+    }
+  };
+
+  protected chartXAxis = computed<any>(() => ({
+    type: 'category',
+    categories: this.displayDates(),
+    labels: {
+      style: {
+        colors: '#6b7280',
+        fontSize: '12px',
+        fontFamily: 'Inter, system-ui, sans-serif'
+      }
+    },
+    axisBorder: {
+      show: false
+    },
+    axisTicks: {
+      show: false
+    },
+    tooltip: {
+      enabled: false
+    }
+  }));
+
+  protected chartYAxis: any = {
+    labels: {
+      style: {
+        colors: '#6b7280',
+        fontSize: '12px',
+        fontFamily: 'Inter, system-ui, sans-serif'
       },
-      tooltip: {
-        callbacks: {
-          label: function(context) {
-            return context.dataset.label + ': ' + context.parsed.r.toFixed(1) + '%';
-          }
+      formatter: (value: number) => {
+        if (value >= 1000000) {
+          const formatted = (value / 1000000).toFixed(1);
+          return formatted.replace(/\.0$/, '') + 'M';
+        } else if (value >= 1000) {
+          const formatted = (value / 1000).toFixed(1);
+          return formatted.replace(/\.0$/, '') + 'K';
         }
+        return value.toString();
       }
     }
   };
 
-  protected benchmarkInsights = computed(() => {
-    const data = this.benchmarkData();
-    const insights: Array<{
-      id: string;
-      title: string;
-      description: string;
-      type: 'improvement' | 'excellent' | 'warning';
-      potential?: string;
-    }> = [];
-    
-    // Анализируем каждый показатель
-    if (data.budget.performance < 60) {
-      insights.push({
-        id: 'budget-low',
-        title: 'Низкий бюджет по сравнению с отраслью',
-        description: `Ваш бюджет составляет ${data.budget.performance.toFixed(1)}% от лучшего результата в отрасли`,
-        type: 'improvement',
-        potential: 'Увеличение бюджета на 40-60% может значительно улучшить результаты'
-      });
-    } else if (data.budget.performance > 90) {
-      insights.push({
-        id: 'budget-excellent',
-        title: 'Отличный бюджет',
-        description: 'Ваш бюджет превышает 90% лучшего результата в отрасли',
-        type: 'excellent'
-      });
-    }
-    
-    if (data.conversions.performance < 50) {
-      insights.push({
-        id: 'conversions-low',
-        title: 'Низкие конверсии',
-        description: `Ваши конверсии составляют ${data.conversions.performance.toFixed(1)}% от лучшего результата`,
-        type: 'improvement',
-        potential: 'Оптимизация воронки может увеличить конверсии на 30-50%'
-      });
-    } else if (data.conversions.performance > 85) {
-      insights.push({
-        id: 'conversions-excellent',
-        title: 'Высокие конверсии',
-        description: 'Ваши конверсии находятся в топ-15% отрасли',
-        type: 'excellent'
-      });
-    }
-    
-    if (data.ctr.performance < 40) {
-      insights.push({
-        id: 'ctr-low',
-        title: 'Низкий CTR',
-        description: `Ваш CTR составляет ${data.ctr.performance.toFixed(1)}% от лучшего результата`,
-        type: 'improvement',
-        potential: 'Обновление креативов может улучшить CTR на 20-40%'
-      });
-    }
-    
-    if (data.cr.performance < 35) {
-      insights.push({
-        id: 'cr-low',
-        title: 'Низкий CR',
-        description: `Ваш CR составляет ${data.cr.performance.toFixed(1)}% от лучшего результата`,
-        type: 'improvement',
-        potential: 'Оптимизация процесса конверсии может улучшить CR на 25-45%'
-      });
-    }
-    
-    // Общие рекомендации
-    const averagePerformance = (data.budget.performance + data.conversions.performance + data.ctr.performance + data.cr.performance) / 4;
-    
-    if (averagePerformance < 50) {
-      insights.push({
-        id: 'overall-improvement',
-        title: 'Общий потенциал улучшения',
-        description: `Средняя производительность составляет ${averagePerformance.toFixed(1)}%`,
-        type: 'warning',
-        potential: 'Комплексная оптимизация может улучшить общие показатели на 40-60%'
-      });
-    } else if (averagePerformance > 80) {
-      insights.push({
-        id: 'overall-excellent',
-        title: 'Отличные результаты',
-        description: 'Ваши показатели находятся в топ-20% отрасли',
-        type: 'excellent'
-      });
-    }
-    
-    return insights;
-  });
+  protected chartColors: string[] = [
+    '#3b82f6', // blue
+    '#10b981', // green
+    '#ef4444', // red
+    '#f59e0b', // orange
+    '#eab308', // yellow
+    '#06b6d4', // cyan
+    '#8b5cf6', // purple
+    '#ec4899', // pink
+    '#6366f1', // indigo
+    '#64748b'  // slate
+  ];
 
-  protected chartOptions: ChartConfiguration['options'] = {
-    responsive: true,
-    maintainAspectRatio: false,
-    interaction: {
-      intersect: false,
-      mode: 'index'
+  protected chartStroke: any = {
+    curve: 'smooth',
+    width: 3
+  };
+
+  protected chartLegend: any = {
+    position: 'top',
+    horizontalAlign: 'left',
+    fontSize: '14px',
+    fontFamily: 'Inter, system-ui, sans-serif',
+    fontWeight: 500,
+    labels: {
+      colors: '#374151'
     },
-    plugins: {
-      legend: {
-        display: true,
-        position: 'top',
-        labels: {
-          usePointStyle: true,
-          padding: 20,
-          font: {
-            size: 12,
-            weight: 'bold'
-          }
+    markers: {
+      width: 12,
+      height: 12
+    }
+  };
+
+  protected chartTooltip: any = {
+    theme: 'light',
+    style: {
+      fontSize: '11px',
+      fontFamily: 'Inter, system-ui, sans-serif'
+    },
+    fillSeriesColor: false,
+    backgroundColor: '#ffffff',
+    borderColor: '#e5e7eb',
+    borderWidth: 1,
+    borderRadius: 6,
+    padding: 6,
+    titleColor: '#374151',
+    bodyColor: '#6b7280',
+    titleFontSize: '11px',
+    bodyFontSize: '11px',
+    titleFontWeight: 600,
+    bodyFontWeight: 400,
+    intersect: false,
+    shared: true,
+    marker: {
+      show: true,
+      size: 4
+    },
+    filter: function(seriesEl: any, dataPointIndex: any) {
+      return true; // Показуємо всі серії, навіть з нульовими значеннями
+    },
+    y: {
+      formatter: (value: number, { seriesIndex }: any) => {
+        const seriesName = this.chartSeries()[seriesIndex]?.name;
+        if (seriesName?.includes('Бюджет')) {
+          return `€${value.toLocaleString('ru-RU', { maximumFractionDigits: 0 })}`;
+        } else if (seriesName?.includes('Конверсии')) {
+          return value.toLocaleString('ru-RU', { maximumFractionDigits: 0 });
+        } else if (seriesName?.includes('CTR') || seriesName?.includes('CR')) {
+          return `${value.toFixed(2)}%`;
         }
-      },
-      tooltip: {
-        enabled: true,
-        mode: 'index',
-        intersect: false
-      }
-    },
-    scales: {
-      x: {
-        ticks: {
-          autoSkip: true,
-          font: {
-            size: 11
-          }
-        },
-        grid: {
-          color: 'rgba(0, 0, 0, 0.05)'
-        }
-      },
-      y: {
-        beginAtZero: true,
-        grid: {
-          color: 'rgba(0, 0, 0, 0.05)'
-        },
-        ticks: {
-          font: {
-            size: 11
-          }
-        }
-      }
-    },
-    elements: {
-      line: {
-        tension: 0.4
-      },
-      point: {
-        radius: 4,
-        hoverRadius: 6
-      }
-    },
-    onClick: (event, elements) => {
-      console.log('Chart onClick triggered, elements:', elements);
-      if (elements && elements.length > 0) {
-        const dataIndex = elements[0].index;
-        const datasetIndex = elements[0].datasetIndex;
-        console.log('Clicking on dataIndex:', dataIndex, 'datasetIndex:', datasetIndex);
-        this.showPointDetails(dataIndex, datasetIndex);
+        return value.toFixed(2);
       }
     }
   };
@@ -2118,6 +2158,17 @@ export class DashboardComponent implements OnInit {
     return filteredDates;
   });
 
+  protected displayDates = computed(() => {
+    const dates = this.filteredDates();
+    const project = this.selectedProject();
+
+    // Убираем приставки проектов из дат для отображения
+    return dates.map(d => {
+      const projectSuffix = `-${project}`;
+      return d.endsWith(projectSuffix) ? d.slice(0, -projectSuffix.length) : d;
+    });
+  });
+
   protected hasData = computed(() => {
     return this.store.reports().length > 0;
   });
@@ -2147,8 +2198,9 @@ export class DashboardComponent implements OnInit {
     return this.sortDirection() === 'asc' ? 'text-blue-600' : 'text-blue-600';
   }
 
-  protected chartData = computed<ChartConfiguration<'line'>['data']>(() => {
-    const labels = this.filteredDates();
+  protected chartSeries = computed(() => {
+    const filteredDates = this.filteredDates();
+    const labels = this.displayDates();
     const selected = this.selectedCampaign();
     const subgroup = this.selectedSubgroup();
     const budgetSeries: number[] = [];
@@ -2162,8 +2214,10 @@ export class DashboardComponent implements OnInit {
     const ctrPercentSeries: number[] = [];
     const crPercentSeries: number[] = [];
 
-    for (const d of labels) {
-      const src = this.store.reports().find(x => x.id === d)!;
+    for (let i = 0; i < filteredDates.length; i++) {
+      const d = filteredDates[i];
+      const src = this.store.reports().find(x => x.id === d);
+      if (!src || !src.total) continue;
       let base = src.total;
       if (selected) {
         const camp = src.campaigns.find(c => c.name === selected);
@@ -2176,103 +2230,69 @@ export class DashboardComponent implements OnInit {
           }
         }
       }
-      budgetSeries.push(base.budgetEur);
-      conversionsSeries.push(base.conversions);
-      sendNewMessageSeries.push(base.sendNewMessage);
-      salesFullTelSeries.push(base.salesFullTel);
-      buttonMessengerSeries.push(base.buttonMessenger);
-      impressionsSeries.push(base.impressions);
-      clicksSeries.push(base.clicks);
-      cpmEurSeries.push(base.cpmEur);
-      ctrPercentSeries.push(base.ctrPercent * 100); // Конвертируем в проценты
-      crPercentSeries.push(base.crPercent * 100); // Конвертируем в проценты
+      budgetSeries.push(base.budgetEur || 0);
+      conversionsSeries.push(base.conversions || 0);
+      sendNewMessageSeries.push(base.sendNewMessage || 0);
+      salesFullTelSeries.push(base.salesFullTel || 0);
+      buttonMessengerSeries.push(base.buttonMessenger || 0);
+      impressionsSeries.push(base.impressions || 0);
+      clicksSeries.push(base.clicks || 0);
+      cpmEurSeries.push(base.cpmEur || 0);
+      ctrPercentSeries.push((base.ctrPercent || 0) * 100); // Конвертируем в проценты
+      crPercentSeries.push((base.crPercent || 0) * 100); // Конвертируем в проценты
     }
 
-    return {
-      labels,
-      datasets: [
-        {
-          label: 'Бюджет текущий период',
-          data: budgetSeries,
-          borderColor: '#3b82f6',
-          backgroundColor: 'rgba(59, 130, 246, 0.1)',
-          borderWidth: 3,
-          fill: false
-        },
-        {
-          label: 'Конверсии текущий период',
-          data: conversionsSeries,
-          borderColor: '#10b981',
-          backgroundColor: 'rgba(16, 185, 129, 0.1)',
-          borderWidth: 3,
-          fill: false
-        },
-        {
-          label: 'send_new_message',
-          data: sendNewMessageSeries,
-          borderColor: '#ef4444',
-          backgroundColor: 'rgba(239, 68, 68, 0.1)',
-          borderWidth: 2,
-          fill: false
-        },
-        {
-          label: 'sales_full_tel',
-          data: salesFullTelSeries,
-          borderColor: '#f97316',
-          backgroundColor: 'rgba(249, 115, 22, 0.1)',
-          borderWidth: 2,
-          fill: false
-        },
-        {
-          label: 'button_messenger',
-          data: buttonMessengerSeries,
-          borderColor: '#f59e0b',
-          backgroundColor: 'rgba(245, 158, 11, 0.1)',
-          borderWidth: 2,
-          fill: false
-        },
-        {
-          label: 'Показы текущий период',
-          data: impressionsSeries,
-          borderColor: '#06b6d4',
-          backgroundColor: 'rgba(6, 182, 212, 0.1)',
-          borderWidth: 2,
-          fill: false
-        },
-        {
-          label: 'Клики текущий период',
-          data: clicksSeries,
-          borderColor: '#8b5cf6',
-          backgroundColor: 'rgba(139, 92, 246, 0.1)',
-          borderWidth: 2,
-          fill: false
-        },
-        {
-          label: 'СРМ текущий период',
-          data: cpmEurSeries,
-          borderColor: '#ec4899',
-          backgroundColor: 'rgba(236, 72, 153, 0.1)',
-          borderWidth: 2,
-          fill: false
-        },
-        {
-          label: 'CTR текущий период',
-          data: ctrPercentSeries,
-          borderColor: '#6366f1',
-          backgroundColor: 'rgba(99, 102, 241, 0.1)',
-          borderWidth: 2,
-          fill: false
-        },
-        {
-          label: 'CR текущий период',
-          data: crPercentSeries,
-          borderColor: '#64748b',
-          backgroundColor: 'rgba(100, 116, 139, 0.1)',
-          borderWidth: 2,
-          fill: false
-        },
-      ],
-    };
+    const series = [
+      {
+        name: 'Бюджет текущий период',
+        data: budgetSeries
+      },
+      {
+        name: 'Конверсии текущий период',
+        data: conversionsSeries
+      },
+      {
+        name: 'send_new_message',
+        data: sendNewMessageSeries
+      },
+      {
+        name: 'sales_full_tel',
+        data: salesFullTelSeries
+      },
+      {
+        name: 'button_messenger',
+        data: buttonMessengerSeries
+      },
+      {
+        name: 'Показы текущий период',
+        data: impressionsSeries
+      },
+      {
+        name: 'Клики текущий период',
+        data: clicksSeries
+      },
+      {
+        name: 'СРМ текущий период',
+        data: cpmEurSeries
+      },
+      {
+        name: 'CTR текущий период',
+        data: ctrPercentSeries
+      },
+      {
+        name: 'CR текущий период',
+        data: crPercentSeries
+      }
+    ];
+
+    // Діагностика: перевіряємо чи всі серії мають дані
+    console.log('Chart Series Debug:', {
+      filteredDates: filteredDates.length,
+      seriesCount: series.length,
+      seriesData: series.map(s => ({ name: s.name, dataLength: s.data.length, hasData: s.data.some(d => d > 0) }))
+    });
+
+    return series;
   });
 
   protected totals = computed(() => {
@@ -2282,7 +2302,8 @@ export class DashboardComponent implements OnInit {
     let budget = 0, conversions = 0, clicks = 0, impressions = 0, ctrSum = 0;
     let sendNewMessage = 0, salesFullTel = 0, buttonMessenger = 0, cpmEur = 0, crSum = 0;
     for (const d of labels) {
-      const report = this.store.reports().find(x => x.id === d)!;
+      const report = this.store.reports().find(x => x.id === d);
+      if (!report || !report.total) continue;
       let base = report.total;
       if (selected) {
         const camp = report.campaigns.find(c => c.name === selected);
@@ -2325,7 +2346,8 @@ export class DashboardComponent implements OnInit {
     const project = this.selectedProject();
 
     for (const d of this.filteredDates()) {
-      const report = this.store.reports().find(x => x.id === d)!;
+      const report = this.store.reports().find(x => x.id === d);
+      if (!report) continue;
       if (!camp) {
         // агрегируем кампании
         for (const r of report.campaigns) {
@@ -2439,114 +2461,68 @@ export class DashboardComponent implements OnInit {
   onCampaign(e: Event) { this.selectedCampaign.set((e.target as HTMLSelectElement).value); }
   onSubgroup(e: Event) { this.selectedSubgroup.set((e.target as HTMLSelectElement).value); }
   onProject(e: Event) { this.selectedProject.set((e.target as HTMLSelectElement).value as ProjectType); }
-  
+
   onDeleteDateSelect(e: Event) {
     this.selectedDeleteDate.set((e.target as HTMLSelectElement).value);
   }
-  
+
   async deleteSelectedDate() {
     const date = this.selectedDeleteDate();
     if (!date) return;
-    
+
     try {
       // Находим все отчеты для выбранной даты
-      const reports = this.store.reports().filter(r => r.date === date);
-      
+      // Убираем суффикс проекта из даты для поиска
+      const cleanDate = date.split('-').slice(0, 3).join('-');
+      const reports = this.store.reports().filter(r => r.date === cleanDate);
+
       // Удаляем каждый отчет
       for (const report of reports) {
         await this.store.deleteReport(report.id);
       }
-      
+
       // Закрываем модальное окно
       this.showDeleteModal.set(false);
       this.selectedDeleteDate.set('');
-      
+
       // Показываем уведомление об успехе
       alert(`Данные за ${date} успешно удалены!`);
-      
+
     } catch (error) {
       alert('Ошибка при удалении данных');
     }
   }
 
-  showPointDetails(dataIndex: number, datasetIndex: number) {
-    console.log('showPointDetails called with:', { dataIndex, datasetIndex });
-    
-    const dates = this.filteredDates();
-    console.log('Available dates:', dates);
-    console.log('dataIndex:', dataIndex, 'dates length:', dates.length);
-    
-    const date = dates[dataIndex];
-    const metricName = this.getMetricNameByDatasetIndex(datasetIndex);
-    
-    console.log('Found date:', date, 'metricName:', metricName);
-    
-    if (!date || !metricName) {
-      console.log('Missing date or metricName');
+  async clearAllData() {
+    if (!confirm('Вы уверены, что хотите удалить ВСЕ данные? Это действие нельзя отменить.')) {
       return;
     }
-    
-    // Извлекаем чистую дату без проекта
-    const cleanDate = date.split('-').slice(0, 3).join('-'); // Берем только YYYY-MM-DD
-    console.log('Clean date:', cleanDate);
-    
-    // Получаем данные для выбранной даты и метрики
-    const reports = this.store.reports().filter(r => r.date === cleanDate);
-    const projectData = reports.find(r => r.project === this.selectedProject());
-    
-    console.log('Found reports:', reports.length, 'projectData:', !!projectData);
-    console.log('Selected project:', this.selectedProject());
-    
-    if (!projectData) {
-      console.log('No project data found');
-      return;
+
+    try {
+      // Очищаем все данные через store
+      await this.store.clearAll();
+
+      // Закрываем модальное окно
+      this.showDeleteModal.set(false);
+      this.selectedDeleteDate.set('');
+
+      // Показываем уведомление об успехе
+      alert('Все данные успешно удалены!');
+
+      // Перезагружаем страницу для обновления данных
+      window.location.reload();
+
+    } catch (error) {
+      alert('Ошибка при удалении всех данных');
     }
-    
-    const pointData = {
-      date: cleanDate,
-      metric: metricName,
-      value: this.getMetricValue(projectData, metricName),
-      campaigns: projectData.campaigns,
-      total: projectData.total
-    };
-    
-    console.log('Point data:', pointData);
-    
-    this.selectedPointData.set(pointData);
-    this.showDetailsModal.set(true);
-    console.log('Modal should be open now');
   }
 
-  private getMetricNameByDatasetIndex(datasetIndex: number): string {
-    const metrics = [
-      'Бюджет', 'Конверсии', 'send_new_message', 'sales_full_tel', 
-      'button_messenger', 'Показы', 'Клики', 'СРМ', 'CTR', 'CR'
-    ];
-    console.log('getMetricNameByDatasetIndex:', { datasetIndex, metrics, result: metrics[datasetIndex] });
-    return metrics[datasetIndex] || '';
-  }
 
-  private getMetricValue(report: any, metricName: string): number {
-    const metricMap: { [key: string]: string } = {
-      'Бюджет': 'budgetEur',
-      'Конверсии': 'conversions',
-      'send_new_message': 'sendNewMessage',
-      'sales_full_tel': 'salesFullTel',
-      'button_messenger': 'buttonMessenger',
-      'Показы': 'impressions',
-      'Клики': 'clicks',
-      'СРМ': 'cpmEur',
-      'CTR': 'ctrPercent',
-      'CR': 'crPercent'
-    };
-    
-    const field = metricMap[metricName];
-    return field ? report.total[field] : 0;
-  }
 
   onTrendPeriod(e: Event) {
     const input = e.target as HTMLSelectElement;
-    this.trendPeriod.set(parseInt(input.value));
+    const newPeriod = parseInt(input.value);
+    this.trendPeriod.set(newPeriod);
   }
 
   onComparisonPeriod(e: Event) {
@@ -2555,17 +2531,23 @@ export class DashboardComponent implements OnInit {
   }
 
   private calculatePeriodMetrics(dates: string[], project: ProjectType) {
-    const reports = this.store.reports().filter(r => 
-      dates.includes(r.date) && r.project === project
+    const allReports = this.store.reports();
+    // Убираем суффикс проекта из дат для поиска
+    const cleanDates = dates.map(date => date.split('-').slice(0, 3).join('-'));
+    
+    const reports = allReports.filter(r =>
+      cleanDates.includes(r.date) && r.project === project
     );
     
+    console.log('- Filtered reports:', reports);
+
     const total = reports.reduce((sum, r) => ({
       budget: sum.budget + r.total.budgetEur,
       conversions: sum.conversions + r.total.conversions,
       clicks: sum.clicks + r.total.clicks,
       impressions: sum.impressions + r.total.impressions
     }), { budget: 0, conversions: 0, clicks: 0, impressions: 0 });
-    
+
     return {
       budget: total.budget,
       conversions: total.conversions,
@@ -2601,11 +2583,11 @@ export class DashboardComponent implements OnInit {
   private getKPITargets(project: ProjectType) {
     const key = `kpi_targets_${project}`;
     const stored = localStorage.getItem(key);
-    
+
     if (stored) {
       return JSON.parse(stored);
     }
-    
+
     // Дефолтные цели
     const defaultTargets = {
       budget: 10000, // €10,000
@@ -2613,7 +2595,7 @@ export class DashboardComponent implements OnInit {
       ctr: 0.05, // 5%
       cr: 0.02 // 2%
     };
-    
+
     localStorage.setItem(key, JSON.stringify(defaultTargets));
     return defaultTargets;
   }
@@ -2649,7 +2631,7 @@ export class DashboardComponent implements OnInit {
     const input = e.target as HTMLSelectElement;
     const project = input.value as ProjectType;
     this.kpiSettingsProject.set(project);
-    
+
     // Загружаем цели для выбранного проекта
     const targets = this.getKPITargets(project);
     this.kpiSettingsTargets.set(targets);
@@ -2686,14 +2668,14 @@ export class DashboardComponent implements OnInit {
   saveKPISettings() {
     const project = this.kpiSettingsProject();
     const targets = this.kpiSettingsTargets();
-    
+
     // Сохраняем в localStorage
     const key = `kpi_targets_${project}`;
     localStorage.setItem(key, JSON.stringify(targets));
-    
+
     // Закрываем модальное окно
     this.showKPISettings.set(false);
-    
+
     // Показываем уведомление
     alert(`Цели для проекта ${project} успешно сохранены!`);
   }
@@ -2739,16 +2721,7 @@ export class DashboardComponent implements OnInit {
     }
   }
 
-  dismissAnomaly(anomalyId: string) {
-    const dismissedAnomalies = this.getDismissedAnomalies();
-    dismissedAnomalies.push(anomalyId);
-    localStorage.setItem('dismissed_anomalies', JSON.stringify(dismissedAnomalies));
-  }
 
-  private getDismissedAnomalies(): string[] {
-    const stored = localStorage.getItem('dismissed_anomalies');
-    return stored ? JSON.parse(stored) : [];
-  }
 
   onRecommendationPriority(e: Event) {
     const input = e.target as HTMLSelectElement;
@@ -2791,47 +2764,9 @@ export class DashboardComponent implements OnInit {
     }
   }
 
-  dismissRecommendation(recommendationId: string) {
-    const dismissedRecommendations = this.getDismissedRecommendations();
-    dismissedRecommendations.push(recommendationId);
-    localStorage.setItem('dismissed_recommendations', JSON.stringify(dismissedRecommendations));
-  }
 
-  private getDismissedRecommendations(): string[] {
-    const stored = localStorage.getItem('dismissed_recommendations');
-    return stored ? JSON.parse(stored) : [];
-  }
 
-  onBenchmarkIndustry(e: Event) {
-    const input = e.target as HTMLSelectElement;
-    const newIndustry = input.value as 'automotive' | 'machinery' | 'agriculture' | 'general';
-    this.benchmarkIndustry.set(newIndustry);
-    this.loadGoogleAdsBenchmarks();
-  }
 
-  getBenchmarkClass(performance: number): string {
-    if (performance >= 80) return 'bg-green-100 text-green-800';
-    if (performance >= 60) return 'bg-yellow-100 text-yellow-800';
-    if (performance >= 40) return 'bg-orange-100 text-orange-800';
-    return 'bg-red-100 text-red-800';
-  }
-
-  getBenchmarkStatus(performance: number): string {
-    if (performance >= 90) return 'Отлично';
-    if (performance >= 80) return 'Хорошо';
-    if (performance >= 60) return 'Средне';
-    if (performance >= 40) return 'Плохо';
-    return 'Критично';
-  }
-
-  getBenchmarkInsightIcon(type: 'improvement' | 'excellent' | 'warning'): string {
-    switch (type) {
-      case 'improvement': return '📈';
-      case 'excellent': return '🏆';
-      case 'warning': return '⚠️';
-      default: return '📊';
-    }
-  }
 
   getTrendClass(trend: number): string {
     if (trend > 5) return 'bg-green-100 text-green-800';
@@ -2849,21 +2784,23 @@ export class DashboardComponent implements OnInit {
     return '➡️';
   }
 
-  protected trendChartData = computed<ChartConfiguration<'line'>['data']>(() => {
+  protected trendChartSeries = computed(() => {
     const dates = this.filteredDates();
     const period = this.trendPeriod();
     const recentDates = dates.slice(-Math.min(period, dates.length));
     const project = this.selectedProject();
-    
+
     const dailyData = recentDates.map(date => {
-      const reports = this.store.reports().filter(r => r.date === date && r.project === project);
+      // Убираем суффикс проекта из даты для поиска
+      const cleanDate = date.split('-').slice(0, 3).join('-');
+      const reports = this.store.reports().filter(r => r.date === cleanDate && r.project === project);
       const total = reports.reduce((sum, r) => ({
         budget: sum.budget + r.total.budgetEur,
         conversions: sum.conversions + r.total.conversions,
         ctr: sum.ctr + (r.total.impressions > 0 ? r.total.clicks / r.total.impressions : 0),
         cr: sum.cr + (r.total.clicks > 0 ? r.total.conversions / r.total.clicks : 0)
       }), { budget: 0, conversions: 0, ctr: 0, cr: 0 });
-      
+
       return {
         date,
         budget: total.budget,
@@ -2873,98 +2810,193 @@ export class DashboardComponent implements OnInit {
       };
     });
 
-    return {
-      labels: dailyData.map(d => d.date),
-      datasets: [
-        {
-          label: 'Бюджет (€)',
-          data: dailyData.map(d => d.budget),
-          borderColor: 'rgb(59, 130, 246)',
-          backgroundColor: 'rgba(59, 130, 246, 0.1)',
-          tension: 0.4
-        },
-        {
-          label: 'Конверсии',
-          data: dailyData.map(d => d.conversions),
-          borderColor: 'rgb(34, 197, 94)',
-          backgroundColor: 'rgba(34, 197, 94, 0.1)',
-          tension: 0.4
-        },
-        {
-          label: 'CTR (%)',
-          data: dailyData.map(d => d.ctr),
-          borderColor: 'rgb(99, 102, 241)',
-          backgroundColor: 'rgba(99, 102, 241, 0.1)',
-          tension: 0.4
-        },
-        {
-          label: 'CR (%)',
-          data: dailyData.map(d => d.cr),
-          borderColor: 'rgb(147, 51, 234)',
-          backgroundColor: 'rgba(147, 51, 234, 0.1)',
-          tension: 0.4
+    const series = [
+      {
+        name: 'Бюджет (€)',
+        data: dailyData.map(d => d.budget)
+      },
+      {
+        name: 'Конверсии',
+        data: dailyData.map(d => d.conversions)
+      },
+      {
+        name: 'CTR (%)',
+        data: dailyData.map(d => d.ctr)
+      },
+      {
+        name: 'CR (%)',
+        data: dailyData.map(d => d.cr)
+      }
+    ];
+    
+    return series;
+  });
+
+  // Trend Chart ApexCharts конфігурації
+  protected trendChartConfig: any = {
+    type: 'line',
+    height: 250,
+    fontFamily: 'Inter, system-ui, sans-serif',
+    animations: {
+      enabled: true,
+      easing: 'linear',
+      speed: 600,
+      animateGradually: {
+        enabled: false
+      },
+      dynamicAnimation: {
+        enabled: true,
+        speed: 300
+      }
+    },
+    toolbar: {
+      show: false
+    },
+    events: {
+      mounted: (chartContext: any, config: any) => {
+        // Виправляємо проблему з passive event listeners
+        const chart = chartContext.w.globals.dom.baseEl;
+        if (chart) {
+          chart.style.touchAction = 'none';
         }
-      ]
+      }
+    },
+    zoom: {
+      enabled: false
+    },
+    pan: {
+      enabled: false
+    },
+    selection: {
+      enabled: false
+    },
+    brush: {
+      enabled: false
+    },
+    dataLabels: {
+      enabled: false
+    }
+  };
+
+  protected trendChartXAxis = computed(() => {
+    const dates = this.filteredDates();
+    const period = this.trendPeriod();
+    const recentDates = dates.slice(-period);
+    
+    // Форматируем даты для отображения
+    const formattedDates = recentDates.map(date => {
+      const cleanDate = date.split('-').slice(0, 3).join('-');
+      const dateObj = new Date(cleanDate);
+      return dateObj.toLocaleDateString('uk-UA', { 
+        day: '2-digit', 
+        month: '2-digit' 
+      });
+    });
+
+    return {
+      type: 'category' as const,
+      categories: formattedDates,
+      labels: {
+        style: {
+          colors: '#6b7280',
+          fontSize: '12px',
+          fontFamily: 'Inter, system-ui, sans-serif'
+        }
+      },
+      axisBorder: {
+        show: false
+      },
+      axisTicks: {
+        show: false
+      },
+      tooltip: {
+        enabled: false
+      }
     };
   });
 
-  protected trendChartOptions: ChartConfiguration['options'] = {
-    responsive: true,
-    maintainAspectRatio: false,
-    interaction: {
-      intersect: false,
-      mode: 'index'
-    },
-    plugins: {
-      legend: {
-        display: true,
-        position: 'top',
-        labels: {
-          usePointStyle: true,
-          padding: 15,
-          font: {
-            size: 11,
-            weight: 'bold'
-          }
-        }
+  protected trendChartYAxis: any = {
+    labels: {
+      style: {
+        colors: '#6b7280',
+        fontSize: '12px',
+        fontFamily: 'Inter, system-ui, sans-serif'
       },
-      tooltip: {
-        enabled: true,
-        mode: 'index',
-        intersect: false
+      formatter: (value: number) => {
+        if (value >= 1000000) {
+          const formatted = (value / 1000000).toFixed(1);
+          return formatted.replace(/\.0$/, '') + 'M';
+        } else if (value >= 1000) {
+          const formatted = (value / 1000).toFixed(1);
+          return formatted.replace(/\.0$/, '') + 'K';
+        }
+        return value.toString();
       }
+    }
+  };
+
+  protected trendChartColors: string[] = [
+    '#3b82f6', // blue
+    '#10b981', // green
+    '#6366f1', // indigo
+    '#9333ea'  // purple
+  ];
+
+  protected trendChartStroke: any = {
+    curve: 'smooth',
+    width: 3
+  };
+
+  protected trendChartLegend: any = {
+    position: 'top',
+    horizontalAlign: 'left',
+    fontSize: '14px',
+    fontFamily: 'Inter, system-ui, sans-serif',
+    fontWeight: 500,
+    labels: {
+      colors: '#374151'
     },
-    scales: {
-      x: {
-        ticks: {
-          autoSkip: true,
-          font: {
-            size: 10
-          }
-        },
-        grid: {
-          color: 'rgba(0, 0, 0, 0.05)'
-        }
-      },
-      y: {
-        beginAtZero: true,
-        grid: {
-          color: 'rgba(0, 0, 0, 0.05)'
-        },
-        ticks: {
-          font: {
-            size: 10
-          }
-        }
-      }
+    markers: {
+      width: 12,
+      height: 12
+    }
+  };
+
+  protected trendChartTooltip: any = {
+    theme: 'light',
+    style: {
+      fontSize: '11px',
+      fontFamily: 'Inter, system-ui, sans-serif'
     },
-    elements: {
-      line: {
-        tension: 0.4
-      },
-      point: {
-        radius: 3,
-        hoverRadius: 5
+    fillSeriesColor: false,
+    backgroundColor: '#ffffff',
+    borderColor: '#e5e7eb',
+    borderWidth: 1,
+    borderRadius: 6,
+    padding: 6,
+    titleColor: '#374151',
+    bodyColor: '#6b7280',
+    titleFontSize: '11px',
+    bodyFontSize: '11px',
+    titleFontWeight: 600,
+    bodyFontWeight: 400,
+    intersect: false,
+    shared: true,
+    marker: {
+      show: true,
+      size: 4
+    },
+    y: {
+      formatter: (value: number, { seriesIndex }: any) => {
+        const seriesName = this.trendChartSeries()[seriesIndex]?.name;
+        if (seriesName?.includes('Бюджет')) {
+          return `€${value.toLocaleString('ru-RU', { maximumFractionDigits: 0 })}`;
+        } else if (seriesName?.includes('Конверсии')) {
+          return value.toLocaleString('ru-RU', { maximumFractionDigits: 0 });
+        } else if (seriesName?.includes('CTR') || seriesName?.includes('CR')) {
+          return `${value.toFixed(2)}%`;
+        }
+        return value.toFixed(2);
       }
     }
   };
@@ -2974,8 +3006,19 @@ export class DashboardComponent implements OnInit {
     effect(() => {
       const dates = this.store.dates();
       if (dates.length && !this.from() && !this.to()) {
-        this.from.set(dates[0]);
-        this.to.set(dates[dates.length - 1]);
+        // Прибираємо суфікси проектів з дат
+        const cleanDates = dates.map(d => {
+          // Прибираємо суфікс проекту (наприклад, -Autoline)
+          const parts = d.split('-');
+          if (parts.length >= 4) {
+            // Якщо є суфікс проекту, прибираємо останню частину
+            return parts.slice(0, 3).join('-');
+          }
+          return d;
+        }).sort();
+        
+        this.from.set(cleanDates[0]);
+        this.to.set(cleanDates[cleanDates.length - 1]);
       }
     });
   }

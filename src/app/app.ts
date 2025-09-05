@@ -20,15 +20,10 @@ import { DashboardComponent } from './dashboard.component';
         </div>
       </header>
 
-      <main class="container mx-auto px-4 py-8 space-y-8">
-        <section class="p-6 rounded-xl bg-white shadow-lg border border-gray-100">
-          <h2 class="text-xl font-semibold text-gray-800 mb-4">Импорт ежедневного отчета</h2>
-          <app-upload></app-upload>
-        </section>
+      <main class="container mx-auto px-4 py-8">
+        <app-upload></app-upload>
 
-        <section>
-          <app-dashboard></app-dashboard>
-        </section>
+        <app-dashboard></app-dashboard>
       </main>
     </div>
   `,
